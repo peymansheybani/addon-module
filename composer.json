@@ -1,0 +1,16 @@
+{
+    "name": "greenweb/addon",
+    "description": "this is addon package for module whmcs",
+    "type": "composer-plugin",
+    "require": {
+        "respect/validation" : "^1.0"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "peyman sheybani",
+            "email": "peyman.sheybanii@gmail.com"
+        }
+    ],
+    "minimum-stability": "beta"
+}
