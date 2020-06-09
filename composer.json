@@ -13,5 +13,8 @@
             "email": "peyman.sheybanii@gmail.com"
         }
     ],
-    "minimum-stability": "beta"
+    "minimum-stability": "beta",
+    "autoload": {
+        "psr-4": { "greenweb\\addon\\": "" }
+    }
 }
