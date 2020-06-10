@@ -1,5 +1,6 @@
 <?php
 
+namespace greenweb\addon;
 
 use greenweb\addon\helpers\FileHelper;
 use Respect\Validation\Validator;
