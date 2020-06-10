@@ -97,4 +97,9 @@ class Addon
     {
         return dirname(dirname(dirname(__DIR__)));
     }
+
+    public static function check1()
+    {
+        return "peyman sheybani";
+    }
 }
