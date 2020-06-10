@@ -98,8 +98,8 @@ class Addon
         return dirname(dirname(dirname(__DIR__)));
     }
 
-    public static function check1()
+    public static function check2()
     {
-        return "peyman sheybani";
+        return "peyman sheybani1";
     }
 }
