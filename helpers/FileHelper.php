@@ -14,6 +14,7 @@ class FileHelper
                 return $path;
             }
         }
+
         return false;
     }
 
