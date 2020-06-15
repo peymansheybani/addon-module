@@ -32,4 +32,9 @@ class Addon
     {
         return str_replace('.','/', $template);
     }
+
+    public static function testVendor()
+    {
+        return 'check';
+    }
 }
