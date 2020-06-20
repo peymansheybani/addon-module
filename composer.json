@@ -15,6 +15,7 @@
     ],
     "minimum-stability": "beta",
     "autoload": {
+        "files": ["helpers/helper.php"],
         "psr-4": {
             "greenweb\\addon\\": ""
         }
