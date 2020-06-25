@@ -5,8 +5,11 @@ namespace greenweb\addon\routing;
 
 
 use greenweb\addon\Addon;
-use greenweb\addon\helpers\FileHelper;
-use Respect\Validation\Validator;
+use greenweb\addon\controller\AdminController;
+use greenweb\addon\controller\ClientController;
+use greenweb\addon\exceptions\ControllerNotFoundException;
+use greenweb\addon\exceptions\MethodNotFoundException;
+use greenweb\addon\exceptions\RouteNotFoundException;
 
 class Routing
 {
@@ -14,65 +17,89 @@ class Routing
     const CLIENT = "client";
     const HTTP = "Http";
 
-    public $defaultRoute;
     public $controller;
     public $method;
     public $basePathController;
     public $vars;
     public $language;
 
-    public $instance;
+    private $customRoute = false;
+
+    public function __construct()
+    {
+
+    }
 
     public static function __callStatic($method, $params)
     {
+        $my = new static();
+        $method = $my->getMethod(debug_backtrace()[1]['function']);
+
+        if($my->checkRoute($params[0], $method)){
+            $my->customRoute = false;
+        } elseif (in_array($params[0], $my->getBaseRoute())) {
+            $values = $my->checkBaseRoute($params[0], $method);
+            $my->controller = $values[0];
+            $my->method = $values[1];
+            $my->customRoute = true;
+        }
+
         $map = [
-            'client' => new AdminRouting(),
-            'admin' => new ClientRouting()
+            'admin' => new AdminRouting(),
+            'client' => new ClientRouting()
         ];
         $route = $map[$method] ?? $map['admin'];
 
-        return $route->route($params[0], $params[1]);
+        return $route->route($my->controller, $my->method, $params[1], $my->customRoute);
     }
 
-    protected function routeArea($action, $vars, $isClient = false)
+    public static function clientController()
     {
-        $this->initialRoutes($action, $vars)
+        return self::baseController(). DIRECTORY_SEPARATOR. self::CLIENT;
+    }
+
+    public static function baseController()
+    {
+        return Addon::ModuleDir().DIRECTORY_SEPARATOR. self::HTTP . DIRECTORY_SEPARATOR. self::CONTROLLER;
+    }
+
+    protected function routeArea($controller, $action, $vars, $customRoute, $isClient = false)
+    {
+        $this->initialData($vars, $isClient)
             ->getBaseDirController($isClient);
 
-        if (Validator::alnum()->validate($this->method) && Validator::alnum()->validate($this->controller)) {
-            if ($selectedDir = FileHelper::findFileInPaths($this->controller . '.php', [$this->basePathController])) {
-                require_once $selectedDir . DIRECTORY_SEPARATOR . $this->controller . '.php';
-                $class = new $this->controller($this->vars);
-
-                return $class->{$this->method}();
-            }
+        if (!$customRoute) {
+            require_once $this->basePathController . DIRECTORY_SEPARATOR . $controller . '.php';
+            $class = new $controller($this->vars);
+        }else{
+            $class =  new AdminController($this->vars);
         }
 
-        return false;
+
+        return $class->{$action}();
     }
 
-    protected function initialRoutes($action, $vars)
+    protected function initialData($vars, $isClient)
     {
         $this->vars = $vars;
-        $action = $action ?: $this->defaultRoute;
-        $action = explode('/', trim($action));
-        $this->controller = ucfirst($action[0]) . 'Controller';
-        $this->method = $action[1];
+        $this->initialDataClient($isClient);
 
         return $this;
     }
 
     protected function getBaseDirController($isClient = false){
         $this->basePathController = $isClient ?
-            Addon::ModuleDir() . self::clientController() :
-            Addon::ModuleDir() . self::baseController();
+            self::clientController() :
+            self::baseController();
 
         return $this;
     }
 
     protected function initialDataClient($isClient = false){
-        $this->vars['session'] = $this->getSession();
-        $this->vars['lang'] = $this->getSession();
+        if ($isClient) {
+            $this->vars['session'] = $this->getSession();
+            $this->vars['lang'] = $this->getLanguage();
+        }
     }
 
     protected function getSession() {
@@ -91,13 +118,92 @@ class Routing
         return require_once $file;
     }
 
-    public static function clientController()
+    private function checkRoute($action, $method)
     {
-        return self::baseController(). DIRECTORY_SEPARATOR. self::CLIENT;
+        $routes = require Addon::ModuleDir().DIRECTORY_SEPARATOR.'Routes'.DIRECTORY_SEPARATOR.'routes.php';
+
+        $check = true;
+
+        if (!$routes[$method][$action]) {
+            $check = false;
+            $this->customRoute = true;
+//            throw new RouteNotFoundException('route not found');
+        }
+
+        if (!$this->isController($routes[$method][$action]['controller'], $method)) {
+            $check = false;
+//            throw new ControllerNotFoundException('controller not found');
+        }
+
+        if (!$this->isMethod($routes[$method][$action]['controller'], $method)) {
+            $check = false;
+//            throw new MethodNotFoundException('method not found');
+        }
+
+        return $check;
     }
 
-    public static function baseController()
+    private function isController($controller, $method)
     {
-        return DIRECTORY_SEPARATOR. self::HTTP . DIRECTORY_SEPARATOR. self::CONTROLLER;
+        $controller = explode('@', $controller)[0];
+        $this->controller = $controller;
+
+        if ($method == 'client' && file_exists(self::clientController().DIRECTORY_SEPARATOR. $controller .'.php')) {
+                return true;
+        }
+
+        if ($method == 'admin' && file_exists(self::baseController().DIRECTORY_SEPARATOR. $controller .'.php')) {
+                return true;
+        }
+
+        return false;
+    }
+
+    private function isMethod($action, $method)
+    {
+        $controller = explode('@', $action)[0];
+        $function = explode('@', $action)[1];
+        $this->method = $function;
+
+        if ($method == 'client' && !$this->customRoute) {
+            require_once self::clientController().DIRECTORY_SEPARATOR. $controller .'.php';
+        }
+
+        if ($method == 'admin' && !$this->customRoute) {
+            require_once self::baseController().DIRECTORY_SEPARATOR. $controller .'.php';
+        }
+
+        if (!$this->customRoute) {
+            $object = new $controller([]);
+
+            if (method_exists($object, $function)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function getMethod() {
+        return (strpos(debug_backtrace()[1]['function'], 'client')) ?
+            'client' : 'admin';
+    }
+
+    private function getBaseRoute() {
+        return (require __DIR__.'/../'.'config.php')['base_route'];
+    }
+
+    private function checkBaseRoute($action, $method) {
+        $this->controller =  ($method === 'admin') ?
+            'AdminController':
+            'ClientController';
+
+        $this->method = explode('/', $action)[1];
+        $this->customRoute = true;
+
+        return [
+            $this->controller,
+            $this->method
+        ];
     }
 }

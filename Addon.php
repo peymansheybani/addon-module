@@ -2,26 +2,33 @@
 
 namespace greenweb\addon;
 
-use greenweb\addon\helpers\FileHelper;
-use Respect\Validation\Validator;
 
 class Addon
 {
-    const CONTROLLER = 'controller';
     const CLIENT = 'client';
     const HTTP = 'Http';
-    const RESOURCES = 'Resources';
     const VIEW = 'View';
     const ADMIN_VIEW = 'Resources'.DIRECTORY_SEPARATOR.'view'.DIRECTORY_SEPARATOR.'admin';
     const CLIENT_VIEW = 'Resources'.DIRECTORY_SEPARATOR.'view'.DIRECTORY_SEPARATOR.'client';
-    private $defaultRoute;
-    private $controller;
-    private $method;
-    private $basePathController;
-    private $vars;
-    private $language;
 
-    public $instance;
+    public static $instance;
+    public $config;
+
+    public $routing;
+    public $request;
+    public $routes;
+
+    public function __construct($config)
+    {
+        static::$instance = $this;
+        $this->setConfig($config);
+        $this->init();
+    }
+
+    private function setConfig($config){
+        $baseConfig = require 'config.php';
+        $this->config = array_merge($baseConfig, $config);
+    }
 
     public static function ModuleDir()
     {
@@ -33,8 +40,20 @@ class Addon
         return str_replace('.','/', $template);
     }
 
-    public static function testVendor()
+    public function boot()
     {
-        return 'check';
+
+    }
+
+    private function init()
+    {
+        collect($this->config['loader'])->each(function ($config, $key){
+                $this->{$key} = new $config;
+        });
+    }
+
+    public function getConfig()
+    {
+        return $this->config;
     }
 }

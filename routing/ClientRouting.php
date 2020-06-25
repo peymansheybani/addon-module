@@ -5,8 +5,8 @@ namespace greenweb\addon\routing;
 
 class ClientRouting extends Routing
 {
-    public function route($action, $vars)
+    public function route($controller, $action, $vars, $customRoute)
     {
-        return $this->routeArea($action, $vars);
+        return $this->routeArea($controller, $action, $vars, $customRoute, true);
     }
 }
