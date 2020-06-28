@@ -3,6 +3,12 @@
 namespace greenweb\addon;
 
 
+use greenweb\addon\Admin\Admin;
+use greenweb\addon\permission\permission;
+use greenweb\addon\request\Request;
+use greenweb\addon\routing\Routing;
+use greenweb\addon\User\User;
+
 class Addon
 {
     const CLIENT = 'client';
@@ -11,23 +17,40 @@ class Addon
     const ADMIN_VIEW = 'Resources'.DIRECTORY_SEPARATOR.'view'.DIRECTORY_SEPARATOR.'admin';
     const CLIENT_VIEW = 'Resources'.DIRECTORY_SEPARATOR.'view'.DIRECTORY_SEPARATOR.'client';
 
+    /**
+     * @var $this
+     */
     public static $instance;
     public $config;
 
+    /**
+     * @var Routing
+     */
     public $routing;
+    /**
+     * @var Request
+     */
     public $request;
     public $routes;
+    /**
+     * @var permission
+     */
+    public $permission;
+
+    /**
+     * @var User
+     */
+    public static $user;
+    /**
+     * @var Admin
+     */
+    public static $admin;
 
     public function __construct($config)
     {
         static::$instance = $this;
         $this->setConfig($config);
         $this->init();
-    }
-
-    private function setConfig($config){
-        $baseConfig = require 'config.php';
-        $this->config = array_merge($baseConfig, $config);
     }
 
     public static function ModuleDir()
@@ -40,20 +63,15 @@ class Addon
         return str_replace('.','/', $template);
     }
 
-    public function boot()
-    {
-
-    }
-
     private function init()
     {
         collect($this->config['loader'])->each(function ($config, $key){
-                $this->{$key} = new $config;
+                $this->{$key} = new $config($this);
         });
     }
 
-    public function getConfig()
-    {
-        return $this->config;
+    private function setConfig($config){
+        $baseConfig = require 'config.php';
+        $this->config = array_merge_recursive($baseConfig, $config);
     }
 }

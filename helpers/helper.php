@@ -19,10 +19,10 @@ if (! method_exists('config')){
         }
 
         if ($key != null) {
-            $config = isset($config[$key]) ?: $config;
+            $config = isset($config[$key]) ? $config[$key] : $config;
+
         }
 
-//        dd($config);
         return $config;
     }
 }

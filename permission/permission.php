@@ -5,15 +5,22 @@ namespace greenweb\addon\permission;
 
 
 use greenweb\addon\Addon;
+use greenweb\addon\models\Permission as Perm;
 
 class permission
 {
-    private $permissions;
+    public $app;
+    public $permissions;
 
-    public function __construct()
+    public function __construct(Addon $app)
     {
-        $permissions =  require Addon::ModuleDir().DIRECTORY_SEPARATOR.'routes'.DIRECTORY_SEPARATOR.'routes.php';
-        $this->permissions = array_keys($permissions['admin']);
+        $this->app = $app;
+        $this->permissions = $this->app->config['permission'];
+    }
+
+    public function has($perm, $user_id = null)
+    {
+        return Perm::hasPerm($perm);
     }
 
 

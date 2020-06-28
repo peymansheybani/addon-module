@@ -3,15 +3,30 @@
 
 namespace greenweb\addon\models;
 
+
 use Illuminate\Database\Eloquent\Model;
+use WHMCS\User\Admin;
 
-class Role extends Model
+class Permission extends Model
 {
-    protected $table = 'tbladminroles';
+    protected $table = 'green_permission';
 
-    protected $fillable = [
-        'name', 'widgets', 'reports'
+    protected $fillable =[
+        'permissions','role_id'
     ];
+
+    protected $casts = [
+      'permissions' => 'array'
+    ];
+
+    public static function hasPerm($perm, $user_id = null)
+    {
+        $user_id = $user_id ?: Admin::find($_SESSION['adminid'])->roleid;
+        $permissions = self::where('role_id', $user_id)
+            ->firstOrFail();
+
+        return in_array($perm, $permissions->permissions);
+    }
 
     public function getQueueableRelations()
     {
@@ -31,18 +46,5 @@ class Role extends Model
     public function resolveChildRouteBinding($childType, $value, $field)
     {
         // TODO: Implement resolveChildRouteBinding() method.
-    }
-
-    public static function hasFullAdminRole()
-    {
-        return self::join('tbladmins', 'tbladmins.roleid', '=', 'tbladminroles.id')
-            ->where('tbladminroles.name', 'like', 'Full Administrator')
-            ->where('tbladmins.id', '=', $_SESSION['adminid'])
-            ->first();
-    }
-
-    public static function allNotFullAdmin()
-    {
-        return self::where('name', '<>', 'Full Administrator')->get();
     }
 }

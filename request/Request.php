@@ -6,7 +6,7 @@ namespace greenweb\addon\request;
 
 class Request
 {
-    public static function get($key, $default)
+    public static function get($key, $default = null)
     {
         return $_GET[$key] ?? $default;
     }

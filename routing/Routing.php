@@ -24,20 +24,27 @@ class Routing
     public $language;
 
     private $customRoute = false;
+    /**
+     * @var Addon
+     */
+    public static $app;
 
-    public function __construct()
+    public $routes;
+
+    public function __construct(Addon $app)
     {
-
+        self::$app = $app;
+        $this->routes = require Addon::ModuleDir(). DIRECTORY_SEPARATOR . $app->config['RoutePath'].'routes.php';
     }
 
     public static function __callStatic($method, $params)
     {
-        $my = new static();
+        $my = new static(self::$app);
         $method = $my->getMethod(debug_backtrace()[1]['function']);
 
         if($my->checkRoute($params[0], $method)){
             $my->customRoute = false;
-        } elseif (in_array($params[0], $my->getBaseRoute())) {
+        } else {
             $values = $my->checkBaseRoute($params[0], $method);
             $my->controller = $values[0];
             $my->method = $values[1];
@@ -45,8 +52,8 @@ class Routing
         }
 
         $map = [
-            'admin' => new AdminRouting(),
-            'client' => new ClientRouting()
+            'admin' => new AdminRouting(self::$app),
+            'client' => new ClientRouting(self::$app)
         ];
         $route = $map[$method] ?? $map['admin'];
 
@@ -55,12 +62,12 @@ class Routing
 
     public static function clientController()
     {
-        return self::baseController(). DIRECTORY_SEPARATOR. self::CLIENT;
+        return Addon::ModuleDir(). DIRECTORY_SEPARATOR . self::$app->config['ClientControllerPath'];
     }
 
-    public static function baseController()
+    public static function adminController()
     {
-        return Addon::ModuleDir().DIRECTORY_SEPARATOR. self::HTTP . DIRECTORY_SEPARATOR. self::CONTROLLER;
+        return Addon::ModuleDir(). DIRECTORY_SEPARATOR . self::$app->config['AdminControllerPath'];
     }
 
     protected function routeArea($controller, $action, $vars, $customRoute, $isClient = false)
@@ -69,12 +76,11 @@ class Routing
             ->getBaseDirController($isClient);
 
         if (!$customRoute) {
-            require_once $this->basePathController . DIRECTORY_SEPARATOR . $controller . '.php';
-            $class = new $controller($this->vars);
+            require_once $this->basePathController . $controller . '.php';
+            $class = new $controller(self::$app, $this->vars);
         }else{
-            $class =  new AdminController($this->vars);
+            $class =  new AdminController(self::$app, $this->vars);
         }
-
 
         return $class->{$action}();
     }
@@ -90,7 +96,7 @@ class Routing
     protected function getBaseDirController($isClient = false){
         $this->basePathController = $isClient ?
             self::clientController() :
-            self::baseController();
+            self::adminController();
 
         return $this;
     }
@@ -120,22 +126,22 @@ class Routing
 
     private function checkRoute($action, $method)
     {
-        $routes = require Addon::ModuleDir().DIRECTORY_SEPARATOR.'Routes'.DIRECTORY_SEPARATOR.'routes.php';
+        $this->routes;
 
         $check = true;
 
-        if (!$routes[$method][$action]) {
+        if (!$this->routes[$method][$action]) {
             $check = false;
             $this->customRoute = true;
 //            throw new RouteNotFoundException('route not found');
         }
 
-        if (!$this->isController($routes[$method][$action]['controller'], $method)) {
+        if (!$this->isController($this->routes[$method][$action]['controller'], $method)) {
             $check = false;
 //            throw new ControllerNotFoundException('controller not found');
         }
 
-        if (!$this->isMethod($routes[$method][$action]['controller'], $method)) {
+        if (!$this->isMethod($this->routes[$method][$action]['controller'], $method)) {
             $check = false;
 //            throw new MethodNotFoundException('method not found');
         }
@@ -148,11 +154,11 @@ class Routing
         $controller = explode('@', $controller)[0];
         $this->controller = $controller;
 
-        if ($method == 'client' && file_exists(self::clientController().DIRECTORY_SEPARATOR. $controller .'.php')) {
+        if ($method == 'client' && file_exists(self::clientController(). $controller .'.php')) {
                 return true;
         }
 
-        if ($method == 'admin' && file_exists(self::baseController().DIRECTORY_SEPARATOR. $controller .'.php')) {
+        if ($method == 'admin' && file_exists(self::adminController(). $controller .'.php')) {
                 return true;
         }
 
@@ -166,15 +172,15 @@ class Routing
         $this->method = $function;
 
         if ($method == 'client' && !$this->customRoute) {
-            require_once self::clientController().DIRECTORY_SEPARATOR. $controller .'.php';
+            require_once self::clientController(). $controller .'.php';
         }
 
         if ($method == 'admin' && !$this->customRoute) {
-            require_once self::baseController().DIRECTORY_SEPARATOR. $controller .'.php';
+            require_once self::adminController(). $controller .'.php';
         }
 
         if (!$this->customRoute) {
-            $object = new $controller([]);
+            $object = new $controller(self::$app, []);
 
             if (method_exists($object, $function)) {
                 return true;
@@ -187,10 +193,6 @@ class Routing
     private function getMethod() {
         return (strpos(debug_backtrace()[1]['function'], 'client')) ?
             'client' : 'admin';
-    }
-
-    private function getBaseRoute() {
-        return (require __DIR__.'/../'.'config.php')['base_route'];
     }
 
     private function checkBaseRoute($action, $method) {
