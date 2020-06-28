@@ -3,7 +3,8 @@
     "description": "this is addon package for module whmcs",
     "type": "library",
     "require": {
-        "respect/validation" : "^1.0"
+        "respect/validation" : "^1.0",
+        "morilog/jalali": "3.*"
     },
     "license": "MIT",
     "version": "1.0",
