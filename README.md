@@ -1,3 +1,3 @@
-"# addon-module" 
-# addon-module
-# addon-module
+## Infrastructure package
+
+### This usage package is used for WHMCS addon modules.
