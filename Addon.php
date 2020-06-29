@@ -9,6 +9,7 @@ use greenweb\addon\permission\permission;
 use greenweb\addon\request\Request;
 use greenweb\addon\routing\Routing;
 use greenweb\addon\session\Session;
+use greenweb\addon\setting\Setting;
 use greenweb\addon\User\User;
 
 class Addon
@@ -57,6 +58,11 @@ class Addon
      * @var DateTime
      */
     public $dateTime;
+
+    /**
+     * @var Setting
+     */
+    public $setting;
 
     public function __construct($config)
     {

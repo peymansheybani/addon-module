@@ -7,7 +7,8 @@ return [
         'admin' => \greenweb\addon\Admin\Admin::class,
         'user' => \greenweb\addon\User\User::class,
         'session' => \greenweb\addon\session\Session::class,
-        'dateTime' => \greenweb\addon\formatter\DateTime::class
+        'dateTime' => \greenweb\addon\formatter\DateTime::class,
+        'setting' => \greenweb\addon\setting\Setting::class
     ],
     'permission' => [
         'adminPermission',
