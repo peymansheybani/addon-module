@@ -4,9 +4,11 @@ namespace greenweb\addon;
 
 
 use greenweb\addon\Admin\Admin;
+use greenweb\addon\formatter\DateTime;
 use greenweb\addon\permission\permission;
 use greenweb\addon\request\Request;
 use greenweb\addon\routing\Routing;
+use greenweb\addon\session\Session;
 use greenweb\addon\User\User;
 
 class Addon
@@ -45,6 +47,16 @@ class Addon
      * @var Admin
      */
     public static $admin;
+
+    /**
+     * @var Session
+     */
+    public $session;
+
+    /**
+     * @var DateTime
+     */
+    public $dateTime;
 
     public function __construct($config)
     {
