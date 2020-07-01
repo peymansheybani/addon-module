@@ -2,6 +2,7 @@
     "name": "greenweb/addon",
     "description": "this is addon package for module whmcs",
     "type": "library",
+    "keywords": ["migration"],
     "require": {
         "respect/validation" : "^1.0",
         "morilog/jalali": "3.*"
