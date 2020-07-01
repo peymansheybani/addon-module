@@ -20,5 +20,8 @@
         "psr-4": {
             "greenweb\\addon\\": ""
         }
+    },
+    "scripts": {
+        "migrate" : "@php script.php"
     }
 }
