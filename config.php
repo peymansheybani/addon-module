@@ -13,8 +13,5 @@ return [
     'permission' => [
         'adminPermission',
         'addPermission',
-    ],
-    'migration' => [
-        'permission' => \greenweb\addon\migrations\PermissionMigration::class
     ]
 ];
