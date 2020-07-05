@@ -8,14 +8,11 @@ namespace greenweb\addon\setting;
 
 
 use greenweb\addon\Addon;
+use greenweb\addon\component\Component;
 use greenweb\addon\models\Setting as SettingModel;
 
-class Setting
+class Setting extends Component
 {
-    /**
-     * @var Addon 
-     */
-    private $app;
     /**
      * @var SettingModel
      */
@@ -23,7 +20,7 @@ class Setting
 
     public function __construct(Addon $app)
     {
-        $this->app = $app;
+        parent::__construct($app);
         $this->data = SettingModel::code()->get()->pluck('value', 'key');
     }
 }
