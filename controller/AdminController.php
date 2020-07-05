@@ -3,10 +3,11 @@
 
 namespace greenweb\addon\controller;
 
-use greenweb\addon\Addon;
-use greenweb\addon\models\Permission;
-use greenweb\addon\models\Role;
 use Smarty;
+use WHMCS\Exception;
+use greenweb\addon\Addon;
+use greenweb\addon\models\Role;
+use greenweb\addon\models\Permission;
 
 class AdminController extends Controller
 {
@@ -29,6 +30,10 @@ class AdminController extends Controller
     }
 
     public function permission() {
+        if (!$this->app->hasComponent('permission')) {
+            throw new Exception('permission component not loaded');
+        }
+
         $this->customView = true;
 
         return $this->view('permission',[
@@ -47,10 +52,20 @@ class AdminController extends Controller
 
         http_response_code(200);
         echo  json_encode($permission);
+
+        die();
+    }
+
+    public function getPermission()
+    {
+        $permission = Permission::where('role_id', $this->app->request::post('role_id'))->first();
+        http_response_code('200');
+        echo json_encode($permission->permissions);
+
         die();
     }
 
     private function getViewTemplate(): string{
-        return Addon::ModuleDir() . DIRECTORY_SEPARATOR . Addon::ADMIN_VIEW;
+        return Addon::ModuleDir() . DIRECTORY_SEPARATOR . $this->app->config['AdminViewTemplatePath'];
     }
 }

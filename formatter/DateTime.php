@@ -7,8 +7,9 @@ use Carbon\Carbon;
 use Morilog\Jalali\Jalalian;
 use vakata\database\Exception;
 use Morilog\Jalali\CalendarUtils;
+use greenweb\addon\component\Component;
 
-class DateTime
+class DateTime extends Component
 {
     private $date;
     private $start_date;

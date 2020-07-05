@@ -4,19 +4,11 @@
 namespace greenweb\addon\Admin;
 
 
-use greenweb\addon\Addon;
-use greenweb\addon\models\Admin as AdminModel;
 use greenweb\addon\foundation\UserFoundation;
+use greenweb\addon\models\Admin as AdminModel;
 
 class Admin extends UserFoundation
 {
-    public $app;
-
-    public function __construct(Addon $app)
-    {
-        $this->app = $app;
-    }
-
     public function can($perm)
     {
         if (!$this->hasAdmin()) {

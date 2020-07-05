@@ -12,7 +12,7 @@
         </div>
         <div class="col-md-12" style="padding: 0px 40px;margin-top: 20px;">
             {foreach from=$permissions key=key item=perm }
-                <label class="checkbox-inline"><input type="checkbox" class="check_perm" name="perm[]" value="{$perm}">{$perm}</label>
+                <label class="checkbox-inline"><input type="checkbox" class="check_perm" name="perm[]" id="{$perm}" value="{$perm}">{$perm}</label>
             {/foreach}
         </div>
         <div class="col-md-12" style="margin-top: 20px;">
@@ -27,6 +27,19 @@
     $(document).ready(function () {
         $('#roles').change(function () {
             $(".check_perm"). prop("checked", false);
+            $.ajax({
+                url : '{$link}&action=admin/getPermission',
+                type : 'post',
+                data : {
+                    role_id : $(this).val()
+                },
+                success : function (data) {
+                    data = JSON.parse(data);
+                    data.forEach(function ($value, $key) {
+                        $('#'+$value).prop('checked', 'true');
+                    });
+                }
+            });
         });
 
         $('#set_permission').click(function () {

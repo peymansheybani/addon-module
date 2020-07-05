@@ -3,7 +3,6 @@
 namespace greenweb\addon;
 
 
-use greenweb\addon\migrations\Migration;
 use greenweb\addon\User\User;
 use greenweb\addon\Admin\Admin;
 use greenweb\addon\request\Request;
@@ -11,7 +10,24 @@ use greenweb\addon\routing\Routing;
 use greenweb\addon\session\Session;
 use greenweb\addon\setting\Setting;
 use greenweb\addon\formatter\DateTime;
+use greenweb\addon\component\Component;
+use greenweb\addon\migrations\Migration;
 use greenweb\addon\permission\permission;
+
+/**
+ * Class Addon
+ * @package greenweb\addon
+ *
+ * @property Request $request
+ * @property Routing $routing
+ * @property permission $permission
+ * @property User $user
+ * @property Admin $admin
+ * @property DateTime $dateTime
+ * @property Session $session
+ * @property Setting $setting
+ *
+ */
 
 class Addon
 {
@@ -21,39 +37,7 @@ class Addon
     public static $instance;
     public $config;
 
-    /**
-     * @var Routing
-     */
-    public $routing;
     public $routes;
-    /**
-     * @var Request
-     */
-    public $request;
-    /**
-     * @var permission
-     */
-    public $permission;
-    /**
-     * @var User
-     */
-    public static $user;
-    /**
-     * @var Admin
-     */
-    public static $admin;
-    /**
-     * @var Session
-     */
-    public $session;
-    /**
-     * @var DateTime
-     */
-    public $dateTime;
-    /**
-     * @var Setting
-     */
-    public $setting;
     /**
      * @var Migration
      */
@@ -68,7 +52,12 @@ class Addon
         static::$instance = $this;
         $this->setConfig($config);
         $this->setDatabase();
-        $this->init();
+        $this->setMigration();
+    }
+
+    public function __get($name)
+    {
+        return $this->addComponent($name, new $this->config['loader'][$name]($this));
     }
 
     public static function ModuleDir()
@@ -81,13 +70,12 @@ class Addon
         return str_replace('.','/', $template);
     }
 
-    private function init()
-    {
-        collect($this->config['loader'])->each(function ($config, $key){
-                $this->{$key} = new $config($this);
-        });
+    public function addComponent($name, Component $component) {
+        return $this->$name = new $component($this);
+    }
 
-        $this->migration = new Migration($this);
+    public function hasComponent($component) {
+        return isset($this->config['loader'][$component]);
     }
 
     private function setConfig($config){
@@ -97,5 +85,9 @@ class Addon
 
     private function setDatabase() {
         $this->database = require 'database.php';
+    }
+
+    private function setMigration() {
+        $this->migration = new Migration($this);
     }
 }

@@ -7,39 +7,31 @@
 namespace greenweb\addon\models;
 
 
-use Illuminate\Database\Eloquent\Builder;
+use greenweb\addon\Addon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 
+
+/**
+ * Class Setting
+ * @package greenweb\addon\models
+ *
+ * @method static Builder code()
+ *
+ * @property  string $value
+ * @property  string $code
+ * @property  string $key
+ */
 class Setting extends Model
 {
     protected $table = 'setting';
-
+    public $timestamps = false;
     protected $fillable = [
         'code', 'key', 'value'
     ];
 
     public function scopeCode(Builder $query)
     {
-        return $query->where('code', $this->app);
-    }
-
-    public function getQueueableRelations()
-    {
-        // TODO: Implement getQueueableRelations() method.
-    }
-
-    public function getQueueableConnection()
-    {
-        // TODO: Implement getQueueableConnection() method.
-    }
-
-    public function resolveRouteBinding($value, $field = null)
-    {
-        // TODO: Implement resolveRouteBinding() method.
-    }
-
-    public function resolveChildRouteBinding($childType, $value, $field)
-    {
-        // TODO: Implement resolveChildRouteBinding() method.
+        return $query->where('code', Addon::$instance->config['settingConfig']['code']);
     }
 }

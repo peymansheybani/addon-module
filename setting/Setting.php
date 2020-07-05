@@ -19,12 +19,11 @@ class Setting
     /**
      * @var SettingModel
      */
-    public $config;
+    public $data;
 
     public function __construct(Addon $app)
     {
         $this->app = $app;
-        $this->config = SettingModel::where('code', $app->config['settingConfig']['code'])
-            ->get()->pluck('value', 'key');
+        $this->data = SettingModel::code()->get()->pluck('value', 'key');
     }
 }

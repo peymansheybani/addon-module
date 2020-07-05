@@ -4,19 +4,11 @@
 namespace greenweb\addon\User;
 
 
-use greenweb\addon\foundation\UserFoundation;
-use greenweb\addon\Addon;
 use greenweb\addon\models\User as UserModel;
+use greenweb\addon\foundation\UserFoundation;
 
 class User extends UserFoundation
 {
-    public $app;
-
-    public function __construct(Addon $app)
-    {
-        $this->app = $app;
-    }
-
     public function current()
     {
         if (!$this->hasUser()) {

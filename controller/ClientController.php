@@ -15,7 +15,7 @@ class ClientController extends Controller
         return [
             'pagetitle'    => $title,
             'breadcrumb'   => $breadcrump,
-            'templatefile' => Addon::CLIENT_VIEW.DIRECTORY_SEPARATOR.$uri,
+            'templatefile' => Addon::ModuleDir().DIRECTORY_SEPARATOR.$this->app->config['ClientViewTemplatePath'].$uri,
             'requirelogin' => $requirelogin,
             'vars'         => $data,
         ];

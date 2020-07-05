@@ -5,69 +5,59 @@ namespace greenweb\addon\routing;
 
 
 use greenweb\addon\Addon;
+use greenweb\addon\component\Component;
 use greenweb\addon\controller\AdminController;
 use greenweb\addon\controller\ClientController;
 use greenweb\addon\exceptions\ControllerNotFoundException;
 use greenweb\addon\exceptions\MethodNotFoundException;
 use greenweb\addon\exceptions\RouteNotFoundException;
 
-class Routing
+class Routing extends Component
 {
-    const CONTROLLER = "controller";
-    const CLIENT = "client";
-    const HTTP = "Http";
-
     public $controller;
     public $method;
     public $basePathController;
     public $vars;
     public $language;
-
-    private $customRoute = false;
-    /**
-     * @var Addon
-     */
-    public static $app;
-
     public $routes;
+    private $customRoute = false;
 
     public function __construct(Addon $app)
     {
-        self::$app = $app;
+        parent::__construct($app);
         $this->routes = require Addon::ModuleDir(). DIRECTORY_SEPARATOR . $app->config['RoutePath'].'routes.php';
     }
 
-    public static function __callStatic($method, $params)
+    public function __call($method, $params)
     {
-        $my = new static(self::$app);
-        $method = $my->getMethod(debug_backtrace()[1]['function']);
+        $method = $this->getMethod(debug_backtrace()[1]['function']);
 
-        if($my->checkRoute($params[0], $method)){
-            $my->customRoute = false;
+        if($this->checkRoute($params[0], $method)){
+            $this->customRoute = false;
         } else {
-            $values = $my->checkBaseRoute($params[0], $method);
-            $my->controller = $values[0];
-            $my->method = $values[1];
-            $my->customRoute = true;
+            $values = $this->checkBaseRoute($params[0], $method);
+            $this->controller = $values[0];
+            $this->method = $values[1];
+            $this->customRoute = true;
         }
 
         $map = [
-            'admin' => new AdminRouting(self::$app),
-            'client' => new ClientRouting(self::$app)
+            'admin' => new AdminRouting($this->app),
+            'client' => new ClientRouting($this->app)
         ];
         $route = $map[$method] ?? $map['admin'];
 
-        return $route->route($my->controller, $my->method, $params[1], $my->customRoute);
+        return $route->route($this->controller, $this->method, $params[1], $this->customRoute);
     }
 
-    public static function clientController()
+    public function clientController()
     {
-        return Addon::ModuleDir(). DIRECTORY_SEPARATOR . self::$app->config['ClientControllerPath'];
+        return Addon::ModuleDir(). DIRECTORY_SEPARATOR . $this->app->config['ClientControllerPath'];
     }
 
-    public static function adminController()
+    public function adminController()
     {
-        return Addon::ModuleDir(). DIRECTORY_SEPARATOR . self::$app->config['AdminControllerPath'];
+        return Addon::ModuleDir(). DIRECTORY_SEPARATOR . $this->app->config['AdminControllerPath'];
     }
 
     protected function routeArea($controller, $action, $vars, $customRoute, $isClient = false)
@@ -77,28 +67,12 @@ class Routing
 
         if (!$customRoute) {
             require_once $this->basePathController . $controller . '.php';
-            $class = new $controller(self::$app, $this->vars);
+            $class = new $controller($this->app, $this->vars);
         }else{
-            $class =  new AdminController(self::$app, $this->vars);
+            $class =  new AdminController($this->app, $this->vars);
         }
 
         return $class->{$action}();
-    }
-
-    protected function initialData($vars, $isClient)
-    {
-        $this->vars = $vars;
-        $this->initialDataClient($isClient);
-
-        return $this;
-    }
-
-    protected function getBaseDirController($isClient = false){
-        $this->basePathController = $isClient ?
-            self::clientController() :
-            self::adminController();
-
-        return $this;
     }
 
     protected function initialDataClient($isClient = false){
@@ -119,9 +93,25 @@ class Routing
     }
 
     protected function getLanguage() {
-        $file = Addon::ModuleDir(). DIRECTORY_SEPARATOR . "lang" . DIRECTORY_SEPARATOR . $this->language . ".php";
+        $file = Addon::ModuleDir(). $this->app->config['LangPath'] . DIRECTORY_SEPARATOR . $this->app->config['language'] . ".php";
 
         return require_once $file;
+    }
+
+    private function getBaseDirController($isClient = false){
+        $this->basePathController = $isClient ?
+            self::clientController() :
+            self::adminController();
+
+        return $this;
+    }
+
+    private function initialData($vars, $isClient)
+    {
+        $this->vars = $vars;
+        $this->initialDataClient($isClient);
+
+        return $this;
     }
 
     private function checkRoute($action, $method)
@@ -180,7 +170,7 @@ class Routing
         }
 
         if (!$this->customRoute) {
-            $object = new $controller(self::$app, []);
+            $object = new $controller($this->app, []);
 
             if (method_exists($object, $function)) {
                 return true;
