@@ -66,6 +66,6 @@ class AdminController extends Controller
     }
 
     private function getViewTemplate(): string{
-        return Addon::ModuleDir() . DIRECTORY_SEPARATOR . $this->app->config['AdminViewTemplatePath'];
+        return $this->app->config['AdminViewTemplatePath'];
     }
 }

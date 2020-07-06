@@ -85,7 +85,7 @@ class Addon
     private function setConfig($config)
     {
         $baseConfig = require 'config.php';
-        $this->config = array_merge_recursive($baseConfig, $config);
+        $this->config = array_merge($baseConfig, $config);
     }
 
     private function setDatabase()

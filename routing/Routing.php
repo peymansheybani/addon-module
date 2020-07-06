@@ -25,7 +25,7 @@ class Routing extends Component
     public function __construct(Addon $app)
     {
         parent::__construct($app);
-        $this->routes = require Addon::ModuleDir(). DIRECTORY_SEPARATOR . $app->config['RoutePath'].'routes.php';
+        $this->routes = require $app->config['RoutePath'].'routes.php';
     }
 
     public function __call($method, $params)
@@ -57,7 +57,7 @@ class Routing extends Component
 
     public function adminController()
     {
-        return Addon::ModuleDir(). DIRECTORY_SEPARATOR . $this->app->config['AdminControllerPath'];
+        return $this->app->config['AdminControllerPath'];
     }
 
     protected function routeArea($controller, $action, $vars, $customRoute, $isClient = false)
@@ -67,6 +67,7 @@ class Routing extends Component
 
         if (!$customRoute) {
             require_once $this->basePathController . $controller . '.php';
+            $controller = "\\".$controller;
             $class = new $controller($this->app, $this->vars);
         }else{
             $class =  new AdminController($this->app, $this->vars);
@@ -116,8 +117,6 @@ class Routing extends Component
 
     private function checkRoute($action, $method)
     {
-        $this->routes;
-
         $check = true;
 
         if (!$this->routes[$method][$action]) {
