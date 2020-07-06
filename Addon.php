@@ -18,14 +18,14 @@ use greenweb\addon\permission\permission;
  * Class Addon
  * @package greenweb\addon
  *
- * @property Request $request
- * @property Routing $routing
- * @property permission $permission
  * @property User $user
  * @property Admin $admin
- * @property DateTime $dateTime
+ * @property Request $request
+ * @property Routing $routing
  * @property Session $session
  * @property Setting $setting
+ * @property DateTime $dateTime
+ * @property permission $permission
  *
  */
 
@@ -57,7 +57,9 @@ class Addon
 
     public function __get($name)
     {
-        return $this->addComponent($name, new $this->config['loader'][$name]($this));
+        if (isset($this->config['loader'][$name])) {
+            return $this->addComponent($name, new $this->config['loader'][$name]($this));
+        }
     }
 
     public static function ModuleDir()
@@ -70,24 +72,29 @@ class Addon
         return str_replace('.','/', $template);
     }
 
-    public function addComponent($name, Component $component) {
+    public function addComponent($name, Component $component)
+    {
         return $this->$name = new $component($this);
     }
 
-    public function hasComponent($component) {
+    public function hasComponent($component)
+    {
         return isset($this->config['loader'][$component]);
     }
 
-    private function setConfig($config){
+    private function setConfig($config)
+    {
         $baseConfig = require 'config.php';
         $this->config = array_merge_recursive($baseConfig, $config);
     }
 
-    private function setDatabase() {
+    private function setDatabase()
+    {
         $this->database = require 'database.php';
     }
 
-    private function setMigration() {
+    private function setMigration()
+    {
         $this->migration = new Migration($this);
     }
 }

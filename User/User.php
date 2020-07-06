@@ -4,11 +4,23 @@
 namespace greenweb\addon\User;
 
 
+use greenweb\addon\Addon;
+use greenweb\addon\component\Component;
 use greenweb\addon\models\User as UserModel;
 use greenweb\addon\foundation\UserFoundation;
+use greenweb\addon\exceptions\ComponentNotLoadedException;
 
 class User extends UserFoundation
 {
+    public function __construct(Addon $app)
+    {
+        parent::__construct($app);
+
+        if (!$this->app->permission) {
+            throw new ComponentNotLoadedException('permission component not loaded');
+        }
+    }
+
     public function current()
     {
         if (!$this->hasUser()) {
