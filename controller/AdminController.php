@@ -26,7 +26,7 @@ class AdminController extends Controller
     private function DirAdminView($uri){
         return ($this->customView) ?
             dirname(__DIR__).'/templates/'.$uri.'.tpl':
-            $this->getViewTemplate() .DIRECTORY_SEPARATOR.$uri.'.tpl';
+            $this->getViewTemplate() .$uri.'.tpl';
     }
 
     public function permission() {
