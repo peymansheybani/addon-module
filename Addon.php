@@ -53,6 +53,7 @@ class Addon
         $this->setConfig($config);
         $this->setDatabase();
         $this->setMigration();
+        $this->init();
     }
 
     public function __get($name)
@@ -96,5 +97,15 @@ class Addon
     private function setMigration()
     {
         $this->migration = new Migration($this);
+    }
+
+    private function init()
+    {
+        collect($this->config['loader'])->each(function ($component, $name) {
+            $object = new $component($this);
+            if(method_exists($object, 'boot')){
+                $this->addComponent($name, $object);
+            }
+        });
     }
 }
