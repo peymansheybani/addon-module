@@ -8,6 +8,7 @@ use WHMCS\Exception;
 use greenweb\addon\Addon;
 use greenweb\addon\models\Role;
 use greenweb\addon\models\Permission;
+use function Composer\Autoload\includeFile;
 
 class AdminController extends Controller
 {
@@ -15,12 +16,23 @@ class AdminController extends Controller
 
     public function view($template, $params) {
         $uri = Addon::getTemplateUri($template);
-        $params['showPerms'] = Role::hasFullAdminRole() ? true:false;
-        $smarty = new Smarty();
-        $smarty->assign($params);
-        $smarty->caching = false;
 
-        return $smarty->display($this->DirAdminView($uri));
+        if ($this->app->routing->routeType == 'client') {
+            return [
+                'pagetitle'    => 'test',
+                'breadcrumb'   => [$this->vars['modulelink'] => 'test'],
+                'templatefile' => $this->app->config['ClientViewTemplatePath'].$uri,
+//                'requirelogin' => false,
+                'vars'         => $params,
+            ];
+        }else {
+            $params['showPerms'] = Role::hasFullAdminRole() ? true:false;
+            $smarty = new Smarty();
+            $smarty->assign($params);
+            $smarty->caching = false;
+
+            return $smarty->display($this->DirAdminView($uri));
+        }
     }
 
     private function DirAdminView($uri){
@@ -66,6 +78,6 @@ class AdminController extends Controller
     }
 
     private function getViewTemplate(): string{
-        return $this->app->config['AdminViewTemplatePath'];
+        return $this->app->config['BaseDir'].DIRECTORY_SEPARATOR.$this->app->config['AdminViewTemplatePath'];
     }
 }

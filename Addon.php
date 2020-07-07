@@ -78,11 +78,6 @@ class Addon
         return $this->$name = new $component($this);
     }
 
-    public function hasComponent($component)
-    {
-        return isset($this->config['loader'][$component]);
-    }
-
     private function setConfig($config)
     {
         $baseConfig = require 'config.php';

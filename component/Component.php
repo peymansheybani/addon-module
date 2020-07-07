@@ -17,9 +17,4 @@ class Component
     {
         $this->app = $app;
     }
-
-    public function boot()
-    {
-
-    }
 }

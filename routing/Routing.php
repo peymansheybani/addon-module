@@ -6,12 +6,17 @@ namespace greenweb\addon\routing;
 
 use greenweb\addon\Addon;
 use greenweb\addon\component\Component;
-use greenweb\addon\controller\AdminController;
-use greenweb\addon\controller\ClientController;
-use greenweb\addon\exceptions\ControllerNotFoundException;
-use greenweb\addon\exceptions\MethodNotFoundException;
+use greenweb\addon\controller\Controller;
 use greenweb\addon\exceptions\RouteNotFoundException;
+use greenweb\addon\exceptions\MethodNotFoundException;
+use greenweb\addon\exceptions\ControllerNotFoundException;
 
+/**
+ * Class Routing
+ * @package greenweb\addon\routing
+ *
+ * @method string route($action, $vars)
+ */
 class Routing extends Component
 {
     public $controller;
@@ -21,17 +26,21 @@ class Routing extends Component
     public $language;
     public $routes;
     private $customRoute = false;
+    /**
+     * @var string
+     */
+    public $routeType;
 
     public function __construct(Addon $app)
     {
         parent::__construct($app);
-        $this->routes = require $app->config['RoutePath'].'routes.php';
+        $this->routes = require $this->app->config['BaseDir']. DIRECTORY_SEPARATOR .$app->config['RoutePath'].'routes.php';
     }
 
     public function __call($method, $params)
     {
         $method = $this->getMethod(debug_backtrace()[1]['function']);
-
+        $this->routeType = $method;
         if($this->checkRoute($params[0], $method)){
             $this->customRoute = false;
         } else {
@@ -66,11 +75,10 @@ class Routing extends Component
             ->getBaseDirController($isClient);
 
         if (!$customRoute) {
-            require_once $this->basePathController . $controller . '.php';
-            $controller = "\\".$controller;
+            $controller = $this->app->config['ControllerNameSpace']."\\".$controller;
             $class = new $controller($this->app, $this->vars);
         }else{
-            $class =  new AdminController($this->app, $this->vars);
+            $class =  new Controller($this->app, $this->vars);
         }
 
         return $class->{$action}();
@@ -94,7 +102,7 @@ class Routing extends Component
     }
 
     protected function getLanguage() {
-        $file = Addon::ModuleDir(). $this->app->config['LangPath'] . DIRECTORY_SEPARATOR . $this->app->config['language'] . ".php";
+        $file = $this->app->config['BaseDir'] . DIRECTORY_SEPARATOR . $this->app->config['LangPath'] . $this->app->config['language'] . ".php";
 
         return require_once $file;
     }
@@ -143,11 +151,12 @@ class Routing extends Component
         $controller = explode('@', $controller)[0];
         $this->controller = $controller;
 
-        if ($method == 'client' && file_exists(self::clientController(). $controller .'.php')) {
-                return true;
+        $myController = $this->app->config['ControllerNameSpace']."\\".$this->controller;
+        if ($method == 'client' && class_exists($myController)) {
+            return true;
         }
 
-        if ($method == 'admin' && file_exists(self::adminController(). $controller .'.php')) {
+        if ($method == 'admin' && class_exists($myController)) {
                 return true;
         }
 
@@ -161,11 +170,11 @@ class Routing extends Component
         $this->method = $function;
 
         if ($method == 'client' && !$this->customRoute) {
-            require_once self::clientController(). $controller .'.php';
+            $controller = $this->app->config['ControllerNameSpace']."\\".$controller;
         }
 
         if ($method == 'admin' && !$this->customRoute) {
-            require_once self::adminController(). $controller .'.php';
+            $controller = $this->app->config['ControllerNameSpace']."\\".$controller;
         }
 
         if (!$this->customRoute) {
@@ -179,8 +188,8 @@ class Routing extends Component
         return false;
     }
 
-    private function getMethod() {
-        return (strpos(debug_backtrace()[1]['function'], 'client')) ?
+    private function getMethod($method) {
+        return (strpos($method,'client')) ?
             'client' : 'admin';
     }
 

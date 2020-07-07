@@ -14,7 +14,7 @@ class ClientController extends Controller
 
         return [
             'pagetitle'    => $title,
-            'breadcrumb'   => $breadcrump,
+            'breadcrumb'   => [$this->vars['modulelink'] => $breadcrump],
             'templatefile' => $this->app->config['ClientViewTemplatePath'].$uri,
             'requirelogin' => $requirelogin,
             'vars'         => $data,
