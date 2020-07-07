@@ -5,7 +5,7 @@ use greenweb\addon\Addon;
 if (! method_exists('storage_path')){
 
     function storage_path() {
-        return Addon::ModuleDir().DIRECTORY_SEPARATOR.'storage';
+        return Addon::$instance->config['BaseDir'].DIRECTORY_SEPARATOR.'storage';
     }
 }
 
@@ -15,7 +15,7 @@ if (! method_exists('config')){
         $config = [];
 
         if ($file != null) {
-            $config = require Addon::ModuleDir().DIRECTORY_SEPARATOR.'config'.DIRECTORY_SEPARATOR.$file.'.php';
+            $config = require Addon::$instance->config['BaseDir'].DIRECTORY_SEPARATOR.'config'.DIRECTORY_SEPARATOR.$file.'.php';
         }
 
         if ($key != null) {

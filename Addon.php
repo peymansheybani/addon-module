@@ -26,6 +26,7 @@ use greenweb\addon\permission\permission;
  * @property Setting $setting
  * @property DateTime $dateTime
  * @property permission $permission
+ * @property Migration $migration
  *
  */
 
@@ -35,17 +36,11 @@ class Addon
      * @var $this
      */
     public static $instance;
-    public $config;
 
+    public $config;
     public $routes;
-    /**
-     * @var Migration
-     */
-    public $migration;
-    /**
-     * @var mixed
-     */
     public $database;
+    public $migration;
 
     public function __construct($config)
     {
@@ -61,11 +56,6 @@ class Addon
         if (isset($this->config['loader'][$name])) {
             return $this->addComponent($name, new $this->config['loader'][$name]($this));
         }
-    }
-
-    public static function ModuleDir()
-    {
-        return dirname(dirname(dirname(__DIR__)));
     }
 
     public static function getTemplateUri($template)

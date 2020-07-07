@@ -4,7 +4,7 @@ return [
         // load default component
         'routing' => \greenweb\addon\routing\Routing::class,
         'request' => \greenweb\addon\request\Request::class,
-//        'permission' => \greenweb\addon\permission\permission::class,
+        'permission' => \greenweb\addon\permission\permission::class,
 //        'admin' => \greenweb\addon\Admin\Admin::class,
 //        'user' => \greenweb\addon\User\User::class,
 //        'session' => \greenweb\addon\session\Session::class,
@@ -24,7 +24,7 @@ return [
     'ClientControllerPath' => 'Http/Controller/client/',
     'RoutePath' => 'Routes/',
     'ModelPath' => 'Models/',
-    'MigrationPath' => 'Migrations/',
+    'MigrationPath' => 'migrations/',
     'LangPath' => 'lang/',
 
     'language' => 'fa',

@@ -19,67 +19,40 @@ use greenweb\addon\exceptions\ControllerNotFoundException;
  */
 class Routing extends Component
 {
-    public $controller;
-    public $method;
-    public $basePathController;
     public $vars;
-    public $language;
+    public $method;
     public $routes;
-    private $customRoute = false;
-    /**
-     * @var string
-     */
+    public $language;
     public $routeType;
+    public $controller;
+
+    private $routeClass;
+    private $methodCalled;
+    private $customRoute = false;
 
     public function __construct(Addon $app)
     {
         parent::__construct($app);
-        $this->routes = require $this->app->config['BaseDir']. DIRECTORY_SEPARATOR .$app->config['RoutePath'].'routes.php';
+        $this->setRoutes();
     }
 
     public function __call($method, $params)
     {
-        $method = $this->getMethod(debug_backtrace()[1]['function']);
-        $this->routeType = $method;
-        if($this->checkRoute($params[0], $method)){
-            $this->customRoute = false;
-        } else {
-            $values = $this->checkBaseRoute($params[0], $method);
-            $this->controller = $values[0];
-            $this->method = $values[1];
-            $this->customRoute = true;
-        }
-
-        $map = [
-            'admin' => new AdminRouting($this->app),
-            'client' => new ClientRouting($this->app)
-        ];
-        $route = $map[$method] ?? $map['admin'];
-
-        return $route->route($this->controller, $this->method, $params[1], $this->customRoute);
-    }
-
-    public function clientController()
-    {
-        return Addon::ModuleDir(). DIRECTORY_SEPARATOR . $this->app->config['ClientControllerPath'];
-    }
-
-    public function adminController()
-    {
-        return $this->app->config['AdminControllerPath'];
+        return $this->getMethod(debug_backtrace()[1]['function'])
+                ->setRouteData($params, $this->methodCalled)
+                ->setRoutClass()
+                ->routeClass->route($this->controller, $this->method, $params[1], $this->customRoute);
     }
 
     protected function routeArea($controller, $action, $vars, $customRoute, $isClient = false)
     {
-        $this->initialData($vars, $isClient)
-            ->getBaseDirController($isClient);
+        $this->initialData($vars, $isClient);
 
-        if (!$customRoute) {
-            $controller = $this->app->config['ControllerNameSpace']."\\".$controller;
-            $class = new $controller($this->app, $this->vars);
-        }else{
-            $class =  new Controller($this->app, $this->vars);
-        }
+        $controller = (!$customRoute) ?
+            $this->app->config['ControllerNameSpace']."\\".$controller :
+            Controller::class;
+
+        $class = new $controller($this->app, $this->vars);
 
         return $class->{$action}();
     }
@@ -105,14 +78,6 @@ class Routing extends Component
         $file = $this->app->config['BaseDir'] . DIRECTORY_SEPARATOR . $this->app->config['LangPath'] . $this->app->config['language'] . ".php";
 
         return require_once $file;
-    }
-
-    private function getBaseDirController($isClient = false){
-        $this->basePathController = $isClient ?
-            self::clientController() :
-            self::adminController();
-
-        return $this;
     }
 
     private function initialData($vars, $isClient)
@@ -189,14 +154,13 @@ class Routing extends Component
     }
 
     private function getMethod($method) {
-        return (strpos($method,'client')) ?
-            'client' : 'admin';
+        $this->methodCalled = (strpos($method,'client')) ? 'client' : 'admin';
+
+        return $this;
     }
 
     private function checkBaseRoute($action, $method) {
-        $this->controller =  ($method === 'admin') ?
-            'AdminController':
-            'ClientController';
+        $this->controller =  'Controller';
 
         $this->method = explode('/', $action)[1];
         $this->customRoute = true;
@@ -205,5 +169,38 @@ class Routing extends Component
             $this->controller,
             $this->method
         ];
+    }
+
+    private function setRouteData($params, string $method)
+    {
+        $this->routeType = $method;
+
+        if ($this->checkRoute($params[0], $method)) {
+            $this->customRoute = false;
+        } else {
+            $values = $this->checkBaseRoute($params[0], $method);
+            $this->controller = $values[0];
+            $this->method = $values[1];
+            $this->customRoute = true;
+        }
+
+        return $this;
+    }
+
+    private function setRoutClass()
+    {
+        $map = [
+            'admin' => new AdminRouting($this->app),
+            'client' => new ClientRouting($this->app)
+        ];
+        $this->routeClass = $map[$this->methodCalled] ?? $map['admin'];
+
+        return $this;
+    }
+
+    private function setRoutes()
+    {
+        $this->routes = require $this->app->config['BaseDir'] . DIRECTORY_SEPARATOR .
+            $this->app->config['RoutePath'] . 'routes.php';
     }
 }

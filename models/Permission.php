@@ -7,6 +7,13 @@ namespace greenweb\addon\models;
 use Illuminate\Database\Eloquent\Model;
 use WHMCS\User\Admin;
 
+/**
+ * Class Permission
+ * @package greenweb\addon\models
+ *
+ * @property json $permissions
+ * @property int $role_id
+ */
 class Permission extends Model
 {
     protected $table = 'green_permission';
@@ -28,23 +35,12 @@ class Permission extends Model
         return in_array($perm, $permissions->permissions);
     }
 
-    public function getQueueableRelations()
+    public static function savePermission($request)
     {
-        // TODO: Implement getQueueableRelations() method.
-    }
+        $permission = new static();
+        $permission->role_id = $_POST['role_id'];
+        $permission->permissions = $_POST['perms'];
 
-    public function getQueueableConnection()
-    {
-        // TODO: Implement getQueueableConnection() method.
-    }
-
-    public function resolveRouteBinding($value, $field = null)
-    {
-        // TODO: Implement resolveRouteBinding() method.
-    }
-
-    public function resolveChildRouteBinding($childType, $value, $field)
-    {
-        // TODO: Implement resolveChildRouteBinding() method.
+        return $permission->save();
     }
 }

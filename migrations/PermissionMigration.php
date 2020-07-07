@@ -8,10 +8,10 @@ namespace greenweb\addon\migrations;
 
 
 use greenweb\addon\Addon;
-use Illuminate\Database\Migrations\Migration as MigrationAlias;
+use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Capsule\Manager as Capsule;
 
-class PermissionMigration extends MigrationAlias
+class PermissionMigration extends Migration
 {
     /**
      * @var Addon

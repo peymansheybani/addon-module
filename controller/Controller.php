@@ -13,8 +13,10 @@ use greenweb\addon\exceptions\ComponentNotLoadedException;
 
 class Controller
 {
-    public $vars;
+    const CLIENT = 'client';
+
     public $app;
+    public $vars;
 
     private $customView;
 
@@ -27,27 +29,9 @@ class Controller
     public function view($template, $params) {
         $uri = Addon::getTemplateUri($template);
 
-        if ($this->app->routing->routeType == 'client') {
-            return [
-                'pagetitle'    => 'test',
-                'breadcrumb'   => [$this->vars['modulelink'] => 'test'],
-                'templatefile' => $this->app->config['ClientViewTemplatePath'].$uri,
-                'vars'         => $params,
-            ];
-        }else {
-            $params['showPerms'] = Role::hasFullAdminRole() ? true:false;
-            $smarty = new Smarty();
-            $smarty->assign($params);
-            $smarty->caching = false;
-
-            return $smarty->display($this->DirAdminView($uri));
-        }
-    }
-
-    private function DirAdminView($uri){
-        return ($this->customView) ?
-            dirname(__DIR__).'/templates/'.$uri.'.tpl':
-            $this->getViewTemplate() .$uri.'.tpl';
+        return ($this->app->routing->routeType == self::CLIENT) ?
+                $this->renderClient($uri, $params):
+                $this->renderAdmin($params, $uri);
     }
 
     public function permission() {
@@ -66,27 +50,51 @@ class Controller
     }
 
     public function addPermission(){
-        $permission = new Permission();
-        $permission->role_id = $_POST['role_id'];
-        $permission->permissions = $_POST['perms'];
-        $permission->save();
-
         http_response_code(200);
-        echo  json_encode($permission);
+        echo  Permission::SavePermission($_POST);;
 
         die();
     }
 
     public function getPermission()
     {
-        $permission = Permission::where('role_id', $this->app->request::post('role_id'))->first();
+        $permission = Permission::where('role_id', $this->app->request::post('role_id'))
+            ->firstOrFail()
+            ->permissions;
+
         http_response_code('200');
-        echo json_encode($permission->permissions);
+        echo json_encode($permission);
 
         die();
     }
 
     private function getViewTemplate(): string{
         return $this->app->config['BaseDir'].DIRECTORY_SEPARATOR.$this->app->config['AdminViewTemplatePath'];
+    }
+
+    private function renderClient($uri, $params)
+    {
+        return [
+            'pagetitle' => 'test',
+            'breadcrumb' => [$this->vars['modulelink'] => 'test'],
+            'templatefile' => $this->app->config['ClientViewTemplatePath'] . $uri,
+            'vars' => $params,
+        ];
+    }
+
+    private function renderAdmin($params, $uri)
+    {
+        $params['showPerms'] = Role::hasFullAdminRole() ? true : false;
+        $smarty = new Smarty();
+        $smarty->assign($params);
+        $smarty->caching = false;
+
+        return $smarty->display($this->DirAdminView($uri));
+    }
+
+    private function DirAdminView($uri){
+        return ($this->customView) ?
+            dirname(__DIR__).'/templates/'.$uri.'.tpl':
+            $this->getViewTemplate() .$uri.'.tpl';
     }
 }

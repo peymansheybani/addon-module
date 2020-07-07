@@ -13,20 +13,16 @@ use Illuminate\Database\Migrations\Migration as MigrationAlias;
 class Migration
 {
     const DATABASE = 'database.php';
+
     public $app;
-    /**
-     * @var array
-     */
+
     private $migrations;
-    /**
-     * @var array
-     */
     private $migrationDir;
 
     public function __construct(Addon $app)
     {
         $this->app = $app;
-        $this->migrationDir = Addon::ModuleDir().DIRECTORY_SEPARATOR.$app->config['MigrationPath'];
+        $this->migrationDir = $this->app->config['BaseDir'].DIRECTORY_SEPARATOR.$app->config['MigrationPath'];
         $this->migrations =  scandir($this->migrationDir);
     }
 
@@ -35,8 +31,8 @@ class Migration
         collect($this->migrations)->each(function ($value, $key){
             if (!in_array($value, ['..', '.'])) {
                 $fileInfo = pathinfo($this->migrationDir . DIRECTORY_SEPARATOR . $value);
-                require_once $fileInfo['dirname'].DIRECTORY_SEPARATOR.$fileInfo['basename'];
-                $class = new $fileInfo['filename']();
+                $migrationClass = $this->app->config['MigrationNameSpace']."\\".$fileInfo['filename'];
+                $class = new $migrationClass();
 
                 if ($class instanceof MigrationAlias) {
                     $class->run();
