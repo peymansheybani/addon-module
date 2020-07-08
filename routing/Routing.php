@@ -166,7 +166,7 @@ class Routing extends Component
     private function setRouteData($action, string $method)
     {
         $this->routeType = $method;
-
+        $action = str_replace('\\','/',$action);
         $this->checkRoute($action, $method);
 
         return $this;
