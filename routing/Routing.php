@@ -25,10 +25,9 @@ class Routing extends Component
     public $language;
     public $routeType;
     public $controller;
+    public $basePathController;
 
-    private $routeClass;
     private $methodCalled;
-    private $customRoute = false;
 
     public function __construct(Addon $app)
     {
@@ -39,32 +38,18 @@ class Routing extends Component
     public function __call($method, $params)
     {
         return $this->getMethod(debug_backtrace()[1]['function'])
-                ->setRouteData($params, $this->methodCalled)
-                ->setRoutClass()
-                ->routeClass->route($this->controller, $this->method, $params[1], $this->customRoute);
+                ->setRouteData($params[0], $this->methodCalled)
+                ->routeArea($params[1]);
     }
 
-    protected function routeArea($controller, $action, $vars, $customRoute, $isClient = false)
+    public static function parsTemplateUrl($template)
     {
-        $this->initialData($vars, $isClient);
-
-        $controller = (!$customRoute) ?
-            $this->app->config['ControllerNameSpace']."\\".$controller :
-            Controller::class;
-
-        $class = new $controller($this->app, $this->vars);
-
-        return $class->{$action}();
+        return str_replace('.','/', $template);
     }
 
-    protected function initialDataClient($isClient = false){
-        if ($isClient) {
-            $this->vars['session'] = $this->getSession();
-            $this->vars['lang'] = $this->getLanguage();
-        }
-    }
 
-    protected function getSession() {
+    protected function getSession()
+    {
         $session = $_SESSION;
 
         if (isset($_SESSION['message'])) {
@@ -74,10 +59,83 @@ class Routing extends Component
         return $session;
     }
 
-    protected function getLanguage() {
+    protected function getLanguage()
+    {
         $file = $this->app->config['BaseDir'] . DIRECTORY_SEPARATOR . $this->app->config['LangPath'] . $this->app->config['language'] . ".php";
 
         return require_once $file;
+    }
+
+    protected function routeArea($vars)
+    {
+        $isClient = $this->routeType == 'client';
+        $this->initialData($vars, $isClient);
+        $class = new $this->controller($this->app, $this->vars);
+
+        return $class->{$this->method}();
+    }
+
+    protected function initialDataClient($isClient = false)
+    {
+        if ($isClient) {
+            $this->vars['session'] = $this->getSession();
+            $this->vars['lang'] = $this->getLanguage();
+        }
+    }
+
+
+    private function setRoutes()
+    {
+        $this->routes = require $this->app->config['BaseDir'] . DIRECTORY_SEPARATOR .
+            $this->app->config['RoutePath'] . 'routes.php';
+    }
+
+    private function isMethod($action)
+    {
+        $this->method = (isset(explode('@', $action)[1])) ? explode('@', $action)[1] : $this->method;
+
+        if ($this->checkMethod($this->controller)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private function getMethod($method)
+    {
+        $this->methodCalled = (strpos($method,'client')) ? 'client' : 'admin';
+
+        return $this;
+    }
+
+    private function checkMethod($controller)
+    {
+        $object = new $controller($this->app, []);
+
+        return method_exists($object, $this->method);
+    }
+
+    private function checkRoute($action, $method)
+    {
+        $check = true;
+
+        if (!$this->routes[$method][$action]) {
+            $this->method = explode('/', $action)[1];
+
+            if (!$this->checkMethod(Controller::class)) {
+                throw new RouteNotFoundException('route not found');
+            }
+        }
+
+        if (!$this->isController($this->routes[$method][$action]['controller'], $method)) {
+            throw new ControllerNotFoundException('controller not found');
+        }
+
+        if (!$this->isMethod($this->routes[$method][$action]['controller'])) {
+            throw new MethodNotFoundException('method not found');
+        }
+
+        return $check;
     }
 
     private function initialData($vars, $isClient)
@@ -88,119 +146,29 @@ class Routing extends Component
         return $this;
     }
 
-    private function checkRoute($action, $method)
-    {
-        $check = true;
-
-        if (!$this->routes[$method][$action]) {
-            $check = false;
-            $this->customRoute = true;
-//            throw new RouteNotFoundException('route not found');
-        }
-
-        if (!$this->isController($this->routes[$method][$action]['controller'], $method)) {
-            $check = false;
-//            throw new ControllerNotFoundException('controller not found');
-        }
-
-        if (!$this->isMethod($this->routes[$method][$action]['controller'], $method)) {
-            $check = false;
-//            throw new MethodNotFoundException('method not found');
-        }
-
-        return $check;
-    }
-
     private function isController($controller, $method)
     {
-        $controller = explode('@', $controller)[0];
-        $this->controller = $controller;
+        $this->controller = $controller ?
+            $this->app->config['ControllerNameSpace']."\\".explode('@', $controller)[0]:
+            \greenweb\addon\controller\Controller::class;
 
-        $myController = $this->app->config['ControllerNameSpace']."\\".$this->controller;
-        if ($method == 'client' && class_exists($myController)) {
+        if ($method == 'client' && class_exists($this->controller)) {
             return true;
         }
 
-        if ($method == 'admin' && class_exists($myController)) {
+        if ($method == 'admin' && class_exists($this->controller)) {
                 return true;
         }
 
         return false;
     }
 
-    private function isMethod($action, $method)
-    {
-        $controller = explode('@', $action)[0];
-        $function = explode('@', $action)[1];
-        $this->method = $function;
-
-        if ($method == 'client' && !$this->customRoute) {
-            $controller = $this->app->config['ControllerNameSpace']."\\".$controller;
-        }
-
-        if ($method == 'admin' && !$this->customRoute) {
-            $controller = $this->app->config['ControllerNameSpace']."\\".$controller;
-        }
-
-        if (!$this->customRoute) {
-            $object = new $controller($this->app, []);
-
-            if (method_exists($object, $function)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private function getMethod($method) {
-        $this->methodCalled = (strpos($method,'client')) ? 'client' : 'admin';
-
-        return $this;
-    }
-
-    private function checkBaseRoute($action, $method) {
-        $this->controller =  'Controller';
-
-        $this->method = explode('/', $action)[1];
-        $this->customRoute = true;
-
-        return [
-            $this->controller,
-            $this->method
-        ];
-    }
-
-    private function setRouteData($params, string $method)
+    private function setRouteData($action, string $method)
     {
         $this->routeType = $method;
 
-        if ($this->checkRoute($params[0], $method)) {
-            $this->customRoute = false;
-        } else {
-            $values = $this->checkBaseRoute($params[0], $method);
-            $this->controller = $values[0];
-            $this->method = $values[1];
-            $this->customRoute = true;
-        }
+        $this->checkRoute($action, $method);
 
         return $this;
-    }
-
-    private function setRoutClass()
-    {
-        $map = [
-            'admin' => new AdminRouting($this->app),
-            'client' => new ClientRouting($this->app)
-        ];
-        $this->routeClass = $map[$this->methodCalled] ?? $map['admin'];
-
-        return $this;
-    }
-
-    private function setRoutes()
-    {
-        $this->routes = require $this->app->config['BaseDir'] . DIRECTORY_SEPARATOR .
-            $this->app->config['RoutePath'] . 'routes.php';
     }
 }

@@ -33,7 +33,7 @@ class PermissionMigration extends Migration
             Capsule::schema()->create('green_permission', function (Blueprint $table) {
                 $table->increments('id');
                 $table->bigInteger('role_id');
-                $table->json('permissions');
+                $table->json('permissions')->nullable();
                 $table->timestamps();
                 $table->engine = 'InnoDB';
             });

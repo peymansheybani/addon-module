@@ -11,14 +11,9 @@ use Illuminate\Contracts\Support\Arrayable;
 
 class Session extends Component implements ArrayAccess , Iterator, Arrayable
 {
-    public function get($key, $default = null)
+    public function flush()
     {
-        return $_SESSION[$key] ?? $default;
-    }
-
-    public function set($key, $value)
-    {
-        return $_SESSION[$key] = $value;
+        $_SESSION = [];
     }
 
     public function remove($key)
@@ -28,26 +23,20 @@ class Session extends Component implements ArrayAccess , Iterator, Arrayable
         return $_SESSION;
     }
 
-    public function flush()
+    public function set($key, $value)
     {
-        $_SESSION = [];
+        return $_SESSION[$key] = $value;
     }
 
-    public function offsetExists($offset)
+    public function get($key, $default = null)
     {
-        return isset($_SESSION[$offset]);
+        return $_SESSION[$key] ?? $default;
     }
+
 
     public function offsetGet($offset)
     {
         return isset($_SESSION[$offset]) ? $_SESSION[$offset]:'';
-    }
-
-    public function offsetSet($offset, $value)
-    {
-        $_SESSION[$offset] = $value;
-
-        return $this;
     }
 
     public function offsetUnset($offset)
@@ -57,19 +46,27 @@ class Session extends Component implements ArrayAccess , Iterator, Arrayable
         return $this;
     }
 
-    public function current()
+    public function offsetExists($offset)
     {
-        return current($_SESSION);
+        return isset($_SESSION[$offset]);
+    }
+
+    public function offsetSet($offset, $value)
+    {
+        $_SESSION[$offset] = $value;
+
+        return $this;
+    }
+
+
+    public function key()
+    {
+        return key($_SESSION);
     }
 
     public function next()
     {
         return next($_SESSION);
-    }
-
-    public function key()
-    {
-        return key($_SESSION);
     }
 
     public function valid()
@@ -81,6 +78,12 @@ class Session extends Component implements ArrayAccess , Iterator, Arrayable
     {
         reset($_SESSION);
     }
+
+    public function current()
+    {
+        return current($_SESSION);
+    }
+
 
     public function toArray()
     {

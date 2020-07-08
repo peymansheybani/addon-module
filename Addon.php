@@ -25,8 +25,8 @@ use greenweb\addon\permission\permission;
  * @property Session $session
  * @property Setting $setting
  * @property DateTime $dateTime
- * @property permission $permission
  * @property Migration $migration
+ * @property permission $permission
  *
  */
 
@@ -56,11 +56,6 @@ class Addon
         if (isset($this->config['loader'][$name])) {
             return $this->addComponent($name, new $this->config['loader'][$name]($this));
         }
-    }
-
-    public static function getTemplateUri($template)
-    {
-        return str_replace('.','/', $template);
     }
 
     public function addComponent($name, Component $component)

@@ -27,7 +27,7 @@ class Controller
     }
 
     public function view($template, $params) {
-        $uri = Addon::getTemplateUri($template);
+        $uri = $this->app->routing::parsTemplateUrl($template);
 
         return ($this->app->routing->routeType == self::CLIENT) ?
                 $this->renderClient($uri, $params):

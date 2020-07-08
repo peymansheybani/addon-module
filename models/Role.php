@@ -13,26 +13,6 @@ class Role extends Model
         'name', 'widgets', 'reports'
     ];
 
-    public function getQueueableRelations()
-    {
-        // TODO: Implement getQueueableRelations() method.
-    }
-
-    public function getQueueableConnection()
-    {
-        // TODO: Implement getQueueableConnection() method.
-    }
-
-    public function resolveRouteBinding($value, $field = null)
-    {
-        // TODO: Implement resolveRouteBinding() method.
-    }
-
-    public function resolveChildRouteBinding($childType, $value, $field)
-    {
-        // TODO: Implement resolveChildRouteBinding() method.
-    }
-
     public static function hasFullAdminRole()
     {
         return self::join('tbladmins', 'tbladmins.roleid', '=', 'tbladminroles.id')

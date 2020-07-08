@@ -28,19 +28,33 @@ class Permission extends Model
 
     public static function hasPerm($perm, $user_id = null)
     {
-        $user_id = $user_id ?: Admin::find($_SESSION['adminid'])->roleid;
-        $permissions = self::where('role_id', $user_id)
-            ->firstOrFail();
+        $user = $user_id ? Admin::find($user_id): Admin::find($_SESSION['adminid']);
 
-        return in_array($perm, $permissions->permissions);
+        $permission = self::getPermission($user->roleid);
+
+        return in_array($perm, $permission->permissions);
     }
 
     public static function savePermission($request)
     {
-        $permission = new static();
-        $permission->role_id = $_POST['role_id'];
-        $permission->permissions = $_POST['perms'];
+        $permission = null;
+        if (!$permission = self::getPermission($request['role_id'])){
+            $permission = new static();
+        }
+
+        if ($request['perms'] == null && isset($permission->id)) {
+            return $permission->delete();
+        }
+
+        $permission->role_id = $request['role_id'];
+        $permission->permissions = $request['perms'];
 
         return $permission->save();
+    }
+
+    private static function getPermission($role_id)
+    {
+        return self::where('role_id', $role_id)
+            ->first();
     }
 }

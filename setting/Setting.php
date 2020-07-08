@@ -11,11 +11,14 @@ use greenweb\addon\Addon;
 use greenweb\addon\component\Component;
 use greenweb\addon\models\Setting as SettingModel;
 
+/**
+ * Class Setting
+ * @package greenweb\addon\setting
+ *
+ * @property SettingModel $data
+ */
 class Setting extends Component
 {
-    /**
-     * @var SettingModel
-     */
     public $data;
 
     public function __construct(Addon $app)

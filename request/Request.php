@@ -17,4 +17,9 @@ class Request extends Component
     {
         return $_POST[$key] ?? $default;
     }
+
+    public function all()
+    {
+        return $_GET + $_POST;
+    }
 }

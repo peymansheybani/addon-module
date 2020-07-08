@@ -12,15 +12,6 @@ use greenweb\addon\exceptions\ComponentNotLoadedException;
 
 class User extends UserFoundation
 {
-    public function __construct(Addon $app)
-    {
-        parent::__construct($app);
-
-        if (!$this->app->permission) {
-            throw new ComponentNotLoadedException('permission component not loaded');
-        }
-    }
-
     public function current()
     {
         if (!$this->hasUser()) {
@@ -38,6 +29,16 @@ class User extends UserFoundation
 
         $this->app->permission->has($perm, $this->current()->id);
     }
+
+    public function __construct(Addon $app)
+    {
+        parent::__construct($app);
+
+        if (!$this->app->permission) {
+            throw new ComponentNotLoadedException('permission component not loaded');
+        }
+    }
+
 
     private function hasUser() {
         if (isset($_SESSION['uid'])) {
