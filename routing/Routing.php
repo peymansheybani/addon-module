@@ -86,8 +86,12 @@ class Routing extends Component
 
     private function setRoutes()
     {
-        $this->routes = require $this->app->config['BaseDir'] . DIRECTORY_SEPARATOR .
+        $routePath = $this->app->config['BaseDir'] . DIRECTORY_SEPARATOR .
             $this->app->config['RoutePath'] . 'routes.php';
+
+        $this->routes = file_exists($routePath) ? require $routePath : [];
+
+        return $this;
     }
 
     private function isMethod($action)
@@ -123,16 +127,16 @@ class Routing extends Component
             $this->method = explode('/', $action)[1];
 
             if (!$this->checkMethod(Controller::class)) {
-                throw new RouteNotFoundException('route not found');
+                throw new RouteNotFoundException("route {$action} not found");
             }
         }
 
         if (!$this->isController($this->routes[$method][$action]['controller'], $method)) {
-            throw new ControllerNotFoundException('controller not found');
+            throw new ControllerNotFoundException("controller {$this->controller} not found");
         }
 
         if (!$this->isMethod($this->routes[$method][$action]['controller'])) {
-            throw new MethodNotFoundException('method not found');
+            throw new MethodNotFoundException("method {$this->method} not found");
         }
 
         return $check;
