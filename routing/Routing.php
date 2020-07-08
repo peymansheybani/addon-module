@@ -87,7 +87,7 @@ class Routing extends Component
     private function setRoutes()
     {
         $routePath = $this->app->config['BaseDir'] . DIRECTORY_SEPARATOR .
-            $this->app->config['RoutePath'] . 'routes.php';
+            $this->app->config['RoutePath'] . $this->app->config['RouteName'];
 
         $this->routes = file_exists($routePath) ? require $routePath : [];
 
