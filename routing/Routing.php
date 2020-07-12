@@ -25,7 +25,6 @@ class Routing extends Component
     public $language;
     public $routeType;
     public $controller;
-    public $basePathController;
 
     private $methodCalled;
 
@@ -38,7 +37,7 @@ class Routing extends Component
     public function __call($method, $params)
     {
         return $this->getMethod(debug_backtrace()[1]['function'])
-                ->setRouteData($params[0], $this->methodCalled)
+                ->setRouteData($params[0])
                 ->routeArea($params[1]);
     }
 
@@ -72,7 +71,9 @@ class Routing extends Component
         $this->initialData($vars, $isClient);
         $class = new $this->controller($this->app, $this->vars);
 
-        return $class->{$this->method}();
+        $data = $this->app->routingPath->getMethodParams($class, $this->method);
+
+        return $class->{$this->method}(...$data);
     }
 
     protected function initialDataClient($isClient = false)
@@ -82,7 +83,6 @@ class Routing extends Component
             $this->vars['lang'] = $this->getLanguage();
         }
     }
-
 
     private function setRoutes()
     {
@@ -119,11 +119,13 @@ class Routing extends Component
         return method_exists($object, $this->method);
     }
 
-    private function checkRoute($action, $method)
+    private function checkRoute($action)
     {
-        $check = true;
+        if ($routePath = $this->app->routingPath) {
+            $action = $routePath->parsRoute($action);
+        }
 
-        if (!$this->routes[$method][$action]) {
+        if (!$this->routes[$action]) {
             $this->method = explode('/', $action)[1];
 
             if (!$this->checkMethod(Controller::class)) {
@@ -131,15 +133,17 @@ class Routing extends Component
             }
         }
 
-        if (!$this->isController($this->routes[$method][$action]['controller'], $method)) {
+        if (!$this->isController($this->routes[$action]['controller']) &&
+            !$this->isController($this->routes[$action][0])) {
             throw new ControllerNotFoundException("controller {$this->controller} not found");
         }
 
-        if (!$this->isMethod($this->routes[$method][$action]['controller'])) {
+        if (!$this->isMethod($this->routes[$action]['controller']) &&
+            !$this->isController($this->routes[$action][0])) {
             throw new MethodNotFoundException("method {$this->method} not found");
         }
 
-        return $check;
+        return true;
     }
 
     private function initialData($vars, $isClient)
@@ -150,28 +154,28 @@ class Routing extends Component
         return $this;
     }
 
-    private function isController($controller, $method)
+    private function isController($controller)
     {
         $this->controller = $controller ?
             $this->app->config['ControllerNameSpace']."\\".explode('@', $controller)[0]:
             \greenweb\addon\controller\Controller::class;
 
-        if ($method == 'client' && class_exists($this->controller)) {
+        if ($this->methodCalled == 'client' && class_exists($this->controller)) {
             return true;
         }
 
-        if ($method == 'admin' && class_exists($this->controller)) {
+        if ($this->methodCalled == 'admin' && class_exists($this->controller)) {
                 return true;
         }
 
         return false;
     }
 
-    private function setRouteData($action, string $method)
+    private function setRouteData($action)
     {
-        $this->routeType = $method;
+        $this->routeType = $this->methodCalled;
         $action = str_replace('\\','/',$action);
-        $this->checkRoute($action, $method);
+        $this->checkRoute($action);
 
         return $this;
     }

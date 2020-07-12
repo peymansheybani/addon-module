@@ -11,6 +11,7 @@ use greenweb\addon\session\Session;
 use greenweb\addon\setting\Setting;
 use greenweb\addon\formatter\DateTime;
 use greenweb\addon\component\Component;
+use greenweb\addon\routing\RoutingPath;
 use greenweb\addon\migrations\Migration;
 use greenweb\addon\permission\permission;
 
@@ -27,6 +28,7 @@ use greenweb\addon\permission\permission;
  * @property DateTime $dateTime
  * @property Migration $migration
  * @property permission $permission
+ * @property RoutingPath $routingPath
  *
  */
 

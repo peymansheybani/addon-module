@@ -5,7 +5,6 @@ namespace greenweb\addon\controller;
 
 
 use Smarty;
-use WHMCS\Exception;
 use greenweb\addon\Addon;
 use greenweb\addon\models\Role;
 use greenweb\addon\models\Permission;
