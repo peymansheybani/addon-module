@@ -7,11 +7,12 @@
 namespace greenweb\addon\routing;
 
 
+use ReflectionMethod;
 use greenweb\addon\Addon;
+use Illuminate\Database\Eloquent\Model;
 use greenweb\addon\component\Component;
 use greenweb\addon\exceptions\ComponentNotLoadedException;
 use greenweb\addon\exceptions\PathParamsNotFoundException;
-use Illuminate\Database\Eloquent\Model;
 
 class RoutingPath extends Component
 {
@@ -106,7 +107,7 @@ class RoutingPath extends Component
     {
         $data = [];
         if ($this->app->routingPath->hasParamPath) {
-            $reflection = new \ReflectionMethod($class, $method);
+            $reflection = new ReflectionMethod($class, $method);
 
             collect($reflection->getParameters())->each(function ($param, $key) use(&$data){
                 $name = null;

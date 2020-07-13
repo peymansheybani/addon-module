@@ -133,13 +133,13 @@ class Routing extends Component
             }
         }
 
-        if (!$this->isController($this->routes[$action]['controller']) &&
-            !$this->isController($this->routes[$action][0])) {
+        $controller = $this->routes[$action]['controller'] ?? $this->routes[$action][0];
+
+        if (!$this->isController($controller)) {
             throw new ControllerNotFoundException("controller {$this->controller} not found");
         }
 
-        if (!$this->isMethod($this->routes[$action]['controller']) &&
-            !$this->isController($this->routes[$action][0])) {
+        if (!$this->isMethod($controller)) {
             throw new MethodNotFoundException("method {$this->method} not found");
         }
 
