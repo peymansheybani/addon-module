@@ -36,7 +36,7 @@ class Routing extends Component
 
     public function __call($method, $params)
     {
-        return $this->getMethod(debug_backtrace()[1]['function'])
+        return $this->getMethod($params[1])
                 ->setRouteData($params[0])
                 ->routeArea($params[1]);
     }
@@ -107,7 +107,7 @@ class Routing extends Component
 
     private function getMethod($method)
     {
-        $this->methodCalled = (strpos($method,'client')) ? 'client' : 'admin';
+        $this->methodCalled =$method['methodCall'];
 
         return $this;
     }
