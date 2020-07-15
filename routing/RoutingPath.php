@@ -100,7 +100,7 @@ class RoutingPath extends Component
             return $route;
         }
 
-        return false;
+        return $action;
     }
 
     public function getMethodParams($class, $method)

@@ -83,9 +83,15 @@ class Controller
 
     private function renderAdmin($params, $uri)
     {
+        $header = (dirname(__DIR__).'/templates/header.tpl');
         $params['showPerms'] = Role::hasFullAdminRole() ? true : false;
         $smarty = new Smarty();
         $smarty->assign($params);
+        $smarty->assign('link', $this->vars['modulelink']);
+        $this->app->config['HeaderPath'] = $this->app->config['HeaderPath'] === '/' ?
+            $header:$this->app->config['HeaderPath'];
+        $smarty->assign('header', $this->app->config['HeaderPath']);
+        $smarty->assign('data', $this->app->config['menu']);
         $smarty->caching = false;
 
         return $smarty->display($this->DirAdminView($uri));

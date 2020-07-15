@@ -28,6 +28,7 @@ return [
     'ModelPath' => 'Models/',
     'MigrationPath' => 'migrations/',
     'LangPath' => 'lang/',
+    'HeaderPath' => '/',
 
     'language' => 'fa',
 

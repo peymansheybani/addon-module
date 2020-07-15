@@ -15,7 +15,8 @@ use greenweb\addon\exceptions\ControllerNotFoundException;
  * Class Routing
  * @package greenweb\addon\routing
  *
- * @method string route($action, $vars)
+ * @method string admin($action, $vars)
+ * @method string client($action, $vars)
  */
 class Routing extends Component
 {
@@ -36,9 +37,9 @@ class Routing extends Component
 
     public function __call($method, $params)
     {
-        return $this->getMethod($params[1])
-                ->setRouteData($params[0])
-                ->routeArea($params[1]);
+        return $this->getMethod($method)
+                ->setRouteData($params)
+                ->routeArea();
     }
 
     public static function parsTemplateUrl($template)
@@ -65,15 +66,21 @@ class Routing extends Component
         return require_once $file;
     }
 
-    protected function routeArea($vars)
+    protected function routeArea()
     {
         $isClient = $this->routeType == 'client';
-        $this->initialData($vars, $isClient);
+        $this->initialData($isClient);
         $class = new $this->controller($this->app, $this->vars);
 
         $data = $this->app->routingPath->getMethodParams($class, $this->method);
 
-        return $class->{$this->method}(...$data);
+        return [
+            'controller' => $this->controller,
+            'method' => $this->method,
+            'vars' => $this->vars,
+            'data' => $data,
+            'config' => $this->app->config
+        ];
     }
 
     protected function initialDataClient($isClient = false)
@@ -107,7 +114,7 @@ class Routing extends Component
 
     private function getMethod($method)
     {
-        $this->methodCalled =$method['methodCall'];
+        $this->methodCalled = $method == 'client' ? 'client':'admin';
 
         return $this;
     }
@@ -146,9 +153,8 @@ class Routing extends Component
         return true;
     }
 
-    private function initialData($vars, $isClient)
+    private function initialData( $isClient)
     {
-        $this->vars = $vars;
         $this->initialDataClient($isClient);
 
         return $this;
@@ -174,9 +180,26 @@ class Routing extends Component
     private function setRouteData($action)
     {
         $this->routeType = $this->methodCalled;
-        $action = str_replace('\\','/',$action);
+        $this->vars = $action[1];
+        $action = str_replace('\\','/',$action[0]);
+        $action = $this->getSubRoute($action);
         $this->checkRoute($action);
 
         return $this;
+    }
+
+    private function getSubRoute($action)
+    {
+        $arrayAction = explode('/', $action);
+        $module = array_shift($arrayAction);
+
+        if ($this->app->config['modules'][$module]) {
+            $this->vars['subModules'] .= $module . '/';
+            $this->app = new $this->app->config['modules'][$module]();
+            $action = implode('/', $arrayAction);
+            $this->routes = $this->app->routing->routes;
+        }
+
+        return $action;
     }
 }

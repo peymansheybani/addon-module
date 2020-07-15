@@ -50,6 +50,7 @@ class Addon
         $this->setConfig($config);
         $this->setDatabase();
         $this->setMigration();
+        $this->setMenu();
         $this->init();
     }
 
@@ -63,6 +64,14 @@ class Addon
     public function addComponent($name, Component $component)
     {
         return $this->$name = new $component($this);
+    }
+
+    public function run($data)
+    {
+        $data['config']['menu'] = $this->config['menu'];
+        $this->config = $data['config'];
+        $class = new $data['controller']($this, $data['vars']);
+        $class->{$data['method']}(...$data['data']);
     }
 
     private function setConfig($config)
@@ -89,5 +98,22 @@ class Addon
                 $this->addComponent($name, $object);
             }
         });
+    }
+
+    private function setMenu($subModule = null)
+    {
+        $menus = collect($this->config['modules'])->map(function ($app, $key) use ($subModule) {
+            $app = new $app();
+            return $app->setMenu($key.'/');
+        });
+
+        $menus = collect($menus)->flatten(1)->values()->all();
+
+        foreach ($this->config['menu'] as $key => $value) {
+            $value[1] = $subModule.$value[1];
+            $menus[] = $value;
+        }
+
+        $this->config['menu'] = $menus;
     }
 }

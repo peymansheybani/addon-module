@@ -1,3 +1,4 @@
+{include file=$header}
 <div class="row" style="padding: 0px 50px;">
     <div class="col-md-12" style="margin-top: 15px;border: 1px solid #e5e5e5;padding: 15px;border-radius: 5px;">
         <div class="col-md-12">
