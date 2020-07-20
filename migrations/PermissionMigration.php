@@ -8,6 +8,7 @@ namespace greenweb\addon\migrations;
 
 
 use greenweb\addon\Addon;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Capsule\Manager as Capsule;
 

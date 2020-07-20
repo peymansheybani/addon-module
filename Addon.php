@@ -14,6 +14,7 @@ use greenweb\addon\component\Component;
 use greenweb\addon\routing\RoutingPath;
 use greenweb\addon\migrations\Migration;
 use greenweb\addon\permission\permission;
+use is\support\models\TblDomainsAdditionalFields;
 
 /**
  * Class Addon
@@ -44,13 +45,15 @@ class Addon
     public $database;
     public $migration;
 
+    private $vars;
+    private $tempMenu;
+
     public function __construct($config)
     {
         static::$instance = $this;
         $this->setConfig($config);
         $this->setDatabase();
         $this->setMigration();
-        $this->setMenu();
         $this->init();
     }
 
@@ -68,10 +71,15 @@ class Addon
 
     public function run($data)
     {
-        $data['config']['menu'] = $this->config['menu'];
+        $this->vars = $data['vars'];
+        $this->setMenu();
+        $this->getMenu($this->config['menu']);
+        $data['config']['menu'] = $this->tempMenu;
+        $data['config']['ModulesPath'] = $this->config['ModulesPath'];
         $this->config = $data['config'];
         $class = new $data['controller']($this, $data['vars']);
-        $class->{$data['method']}(...$data['data']);
+
+        return $class->{$data['method']}(...$data['data']);
     }
 
     private function setConfig($config)
@@ -100,20 +108,90 @@ class Addon
         });
     }
 
-    private function setMenu($subModule = null)
+    public function setMenu($subModule = null, $menu = [], $isRoot = null)
     {
         $menus = collect($this->config['modules'])->map(function ($app, $key) use ($subModule) {
             $app = new $app();
-            return $app->setMenu($key.'/');
-        });
+            return $app->setMenu($key.'/', $this->config['menu'], is_null($subModule));
+        })->values()->toArray();
 
-        $menus = collect($menus)->flatten(1)->values()->all();
+        if (!empty($menu) && empty($menus)) {
+            $array = [
+                trim($subModule, '/'),
+                'is_module' => trim($subModule, '/'),
+                'icon' => 'icon',
+                'submenu' => $this->config['menu']
+            ];
 
-        foreach ($this->config['menu'] as $key => $value) {
-            $value[1] = $subModule.$value[1];
-            $menus[] = $value;
+            if ($isRoot) {
+                return $array;
+            }
+
+            $menu[] = $array;
+
+            return $menu;
         }
 
-        $this->config['menu'] = $menus;
+        if (!empty($menus) && !is_null($subModule)) {
+            return $menus;
+        }
+
+        if (!empty($menus) && is_null($subModule)) {
+            foreach ($menus as $key => $value) {
+                array_push($this->config['menu'], $value);
+            }
+
+            return $this->config['menu'];
+        }
+
+        return $this->config['menu'];
+    }
+
+    public function getMenu($array, $isSub = false, $parent = '')
+    {
+        if ($isSub) {
+            $this->tempMenu .= '<ul class="dropdown-menu">';
+        }
+
+        foreach ($array as $menu) {
+            $submodule = isset($menu['is_module'])? $menu['is_module'].'/':'';
+            $submodule = $parent.$submodule;
+            $link = isset($menu[1]) ? $menu[1]:"#";
+            $link = $this->vars['modulelink'].'&action='.$parent.$link;
+
+            if (!$isSub) {
+                $this->tempMenu .= '<div class="dropdown">';
+            }
+
+            if (!$isSub && isset($menu['submenu'])){
+                $this->tempMenu .= '<button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown">'.
+                    $menu[0].'<span class="caret"></span></button>';
+            }else if (!$isSub && !isset($menu['submenu'])){
+                $this->tempMenu .= '<a href="'.$link.'" class="btn btn-default">'.
+                    $menu[0].'</a>';
+            }
+
+            if (isset($menu['submenu'])) {
+                if ($isSub) {
+                    $this->tempMenu .= '<li class="dropdown-submenu">';
+                    $this->tempMenu .= '<a class="test" tabindex="-1" href="#">'.$menu[0].' <span class="caret"></span></a>';
+                }
+                $this->getMenu2($menu['submenu'], true, $submodule);
+            }else{
+                $this->tempMenu .= '<li><a tabindex="-1" href="'.$link.'">'.$menu[0].'</a></li>';
+            }
+
+            if (isset($menu['submenu']) && $isSub) {
+                $this->tempMenu .= '</li>';
+            }
+
+            if (!$isSub){
+                $this->tempMenu .= '</div>';
+            }
+        }
+
+        if ($isSub) {
+            $this->tempMenu .= '</ul>';
+        }
     }
 }

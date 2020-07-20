@@ -1,8 +1,30 @@
-<ul class="nav nav-tabs admin-tabs" role="tablist">
-    {foreach from=$data item=item}
-            <li><a href="{$link}&action={$item[1]}" role="tab"><i class=""></i> <i class=""></i>{$item[0]}</a></li>
-    {/foreach}
-    {if $showPerms}
-    <li><a href="{$link}&action=admin/permission" role="tab"><i class=""></i> <i class=""></i>دسترسی کاربران</a></li>
-    {/if}
-</ul>
+<style>
+    .dropdown-submenu {
+        position: relative;
+    }
+
+    .dropdown-submenu .dropdown-menu {
+        top: 0;
+        right: 100%;
+        margin-top: -1px;
+    }
+
+    div.dropdown {
+        float: right;
+        margin-right: 2px;
+    }
+</style>
+
+<div class="row">
+    {menu data=$menu}
+</div>
+
+<script>
+    $(document).ready(function(){
+        $('.dropdown-submenu a.test').on("click", function(e){
+            $(this).next('ul').toggle();
+            e.stopPropagation();
+            e.preventDefault();
+        });
+    });
+</script>
