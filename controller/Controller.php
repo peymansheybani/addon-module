@@ -84,11 +84,13 @@ class Controller
 
     private function renderAdmin($params, $uri)
     {
-        require_once($this->app->config['ModulesPath'].DIRECTORY_SEPARATOR."is_widgets".DIRECTORY_SEPARATOR."Widget.php");
+        // TODO after build WIDGET
+//        require_once($this->app->config['ModulesPath'].DIRECTORY_SEPARATOR."is_widgets".DIRECTORY_SEPARATOR."Widget.php");
         $header = (dirname(__DIR__).'/templates/header.tpl');
         $params['showPerms'] = Role::hasFullAdminRole() ? true : false;
         $smarty = new Smarty();
-        Widget::register($smarty);
+        // TODO after build WIDGET
+//        Widget::register($smarty);
         $smarty->assign($params);
         $smarty->assign('link', $this->vars['modulelink']);
         $this->app->config['HeaderPath'] = $this->app->config['HeaderPath'] === '/' ?

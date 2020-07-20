@@ -16,7 +16,7 @@
 </style>
 
 <div class="row">
-    {menu data=$menu}
+    {$menu}
 </div>
 
 <script>
