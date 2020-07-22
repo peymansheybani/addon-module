@@ -8,7 +8,7 @@ namespace greenweb\addon\migrations;
 
 
 use greenweb\addon\Addon;
-use Illuminate\Database\Migrations\Migration as MigrationAlias;
+use Illuminate\Database\Migrations;
 
 class Migration
 {
@@ -22,7 +22,7 @@ class Migration
     public function __construct(Addon $app)
     {
         $this->app = $app;
-        $this->migrationDir = $this->app->config['BaseDir'].DIRECTORY_SEPARATOR.$app->config['MigrationPath'];
+        $this->migrationDir = $this->app->BaseDir.DIRECTORY_SEPARATOR.rtrim($app->MigrationPath, '/'). '/';
         $this->migrations =  scandir($this->migrationDir);
     }
 
@@ -31,10 +31,10 @@ class Migration
         collect($this->migrations)->each(function ($value, $key){
             if (!in_array($value, ['..', '.'])) {
                 $fileInfo = pathinfo($this->migrationDir . DIRECTORY_SEPARATOR . $value);
-                $migrationClass = $this->app->config['MigrationNameSpace']."\\".$fileInfo['filename'];
+                $migrationClass = $this->app->MigrationNameSpace."\\".$fileInfo['filename'];
                 $class = new $migrationClass();
 
-                if ($class instanceof MigrationAlias) {
+                if ($class instanceof Migrations\Migration) {
                     $class->run();
                 }
             }

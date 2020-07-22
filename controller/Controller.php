@@ -9,7 +9,7 @@ use greenweb\addon\Addon;
 use greenweb\addon\models\Role;
 use greenweb\addon\models\Permission;
 use greenweb\addon\exceptions\ComponentNotLoadedException;
-use is\widgets\Widget;
+//use is\widgets\Widget;
 
 class Controller
 {
@@ -69,7 +69,7 @@ class Controller
     }
 
     private function getViewTemplate(): string{
-        return $this->app->config['BaseDir'].DIRECTORY_SEPARATOR.$this->app->config['AdminViewTemplatePath'];
+        return $this->app->BaseDir.DIRECTORY_SEPARATOR.rtrim($this->app->AdminViewTemplatePath,'/')."/";
     }
 
     private function renderClient($uri, $params)
@@ -77,7 +77,7 @@ class Controller
         return [
             'pagetitle' => 'test',
             'breadcrumb' => [$this->vars['modulelink'] => 'test'],
-            'templatefile' => $this->app->config['ClientViewTemplatePath'] . $uri,
+            'templatefile' => rtrim($this->app->ClientViewTemplatePath, '/'). '/' . $uri,
             'vars' => $params,
         ];
     }
@@ -93,10 +93,10 @@ class Controller
 //        Widget::register($smarty);
         $smarty->assign($params);
         $smarty->assign('link', $this->vars['modulelink']);
-        $this->app->config['HeaderPath'] = $this->app->config['HeaderPath'] === '/' ?
-            $header:$this->app->config['HeaderPath'];
-        $smarty->assign('header', $this->app->config['HeaderPath']);
-        $smarty->assign('menu', $this->app->config['menu']);
+        $this->app->HeaderPath = $this->app->HeaderPath === '/' ?
+            $header:$this->app->HeaderPath;
+        $smarty->assign('header', $this->app->HeaderPath);
+        $smarty->assign('menu', $this->app->tempMenu);
         $smarty->caching = false;
 
         return $smarty->display($this->DirAdminView($uri));

@@ -3,6 +3,7 @@
 namespace greenweb\addon;
 
 
+use greenweb\addon\menu\Menu;
 use greenweb\addon\User\User;
 use greenweb\addon\Admin\Admin;
 use greenweb\addon\request\Request;
@@ -14,12 +15,12 @@ use greenweb\addon\component\Component;
 use greenweb\addon\routing\RoutingPath;
 use greenweb\addon\migrations\Migration;
 use greenweb\addon\permission\permission;
-use is\support\models\TblDomainsAdditionalFields;
 
 /**
  * Class Addon
  * @package greenweb\addon
  *
+ * @property Menu $menu
  * @property User $user
  * @property Admin $admin
  * @property Request $request
@@ -33,34 +34,50 @@ use is\support\models\TblDomainsAdditionalFields;
  *
  */
 
-class Addon
+class Addon extends BaseAddon
 {
     /**
-     * @var $this
+     * @var Addon
      */
     public static $instance;
-
-    public $config;
     public $routes;
     public $database;
+    public $tempMenu;
     public $migration;
 
     private $vars;
-    private $tempMenu;
+    private $component;
 
-    public function __construct($config)
+    public function __construct()
     {
-        static::$instance = $this;
-        $this->setConfig($config);
-        $this->setDatabase();
-        $this->setMigration();
-        $this->init();
+        self::$instance = $this;
+        $this->setBaseDirectory()
+             ->setMigration()
+             ->setComponent()
+             ->setDatabase()
+             ->init();
+    }
+
+    public function run($data)
+    {
+        $this->vars = $data['vars'];
+
+        if ($this->menu instanceof Component) {
+            $this->menu->setMenuList();
+            $this->menu->getMenu($this->menu->menu, false, '', $this->vars);
+            $app = $data['app'];
+            $app->tempMenu = $this->tempMenu;
+        }
+
+        $class = new $data['controller']($data['app'], $data['vars']);
+
+        return $class->{$data['method']}(...$data['data']);
     }
 
     public function __get($name)
     {
-        if (isset($this->config['loader'][$name])) {
-            return $this->addComponent($name, new $this->config['loader'][$name]($this));
+        if (isset($this->component->{$name.'_component'})) {
+            return $this->addComponent($name, new $this->component->{$name.'_component'}($this));
         }
     }
 
@@ -69,129 +86,44 @@ class Addon
         return $this->$name = new $component($this);
     }
 
-    public function run($data)
-    {
-        $this->vars = $data['vars'];
-        $this->setMenu();
-        $this->getMenu($this->config['menu']);
-        $data['config']['menu'] = $this->tempMenu;
-        $data['config']['ModulesPath'] = $this->config['ModulesPath'];
-        $this->config = $data['config'];
-        $class = new $data['controller']($this, $data['vars']);
-
-        return $class->{$data['method']}(...$data['data']);
-    }
-
-    private function setConfig($config)
-    {
-        $baseConfig = require 'config.php';
-        $this->config = array_merge($baseConfig, $config);
-    }
-
-    private function setDatabase()
-    {
-        $this->database = require 'database.php';
-    }
-
-    private function setMigration()
-    {
-        $this->migration = new Migration($this);
-    }
 
     private function init()
     {
-        collect($this->config['loader'])->each(function ($component, $name) {
-            $object = new $component($this);
+        collect(get_object_vars($this->component))->each(function ($component, $name) {
+            $object = (strpos($name,'component') !== false)? new $component($this):'null';
+
             if(method_exists($object, 'boot')){
                 $this->addComponent($name, $object);
             }
         });
     }
 
-    public function setMenu($subModule = null, $menu = [], $isRoot = null)
+    private function setDatabase()
     {
-        $menus = collect($this->config['modules'])->map(function ($app, $key) use ($subModule) {
-            $app = new $app();
-            return $app->setMenu($key.'/', $this->config['menu'], is_null($subModule));
-        })->values()->toArray();
+        $this->database = require 'database.php';
 
-        if (!empty($menu) && empty($menus)) {
-            $array = [
-                trim($subModule, '/'),
-                'is_module' => trim($subModule, '/'),
-                'icon' => 'icon',
-                'submenu' => $this->config['menu']
-            ];
-
-            if ($isRoot) {
-                return $array;
-            }
-
-            $menu[] = $array;
-
-            return $menu;
-        }
-
-        if (!empty($menus) && !is_null($subModule)) {
-            return $menus;
-        }
-
-        if (!empty($menus) && is_null($subModule)) {
-            foreach ($menus as $key => $value) {
-                array_push($this->config['menu'], $value);
-            }
-
-            return $this->config['menu'];
-        }
-
-        return $this->config['menu'];
+        return $this;
     }
 
-    public function getMenu($array, $isSub = false, $parent = '')
+    private function setMigration()
     {
-        if ($isSub) {
-            $this->tempMenu .= '<ul class="dropdown-menu">';
-        }
+        $this->migration = new Migration($this);
 
-        foreach ($array as $menu) {
-            $submodule = isset($menu['is_module'])? $menu['is_module'].'/':'';
-            $submodule = $parent.$submodule;
-            $link = isset($menu[1]) ? $menu[1]:"#";
-            $link = $this->vars['modulelink'].'&action='.$parent.$link;
+        return $this;
+    }
 
-            if (!$isSub) {
-                $this->tempMenu .= '<div class="dropdown">';
-            }
+    private function setBaseDirectory()
+    {
+        $rc = new \ReflectionClass(get_class($this));
+        $this->BaseDir = dirname($rc->getFileName());
 
-            if (!$isSub && isset($menu['submenu'])){
-                $this->tempMenu .= '<button class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown">'.
-                    $menu[0].'<span class="caret"></span></button>';
-            }else if (!$isSub && !isset($menu['submenu'])){
-                $this->tempMenu .= '<a href="'.$link.'" class="btn btn-default">'.
-                    $menu[0].'</a>';
-            }
+        return $this;
+    }
 
-            if (isset($menu['submenu'])) {
-                if ($isSub) {
-                    $this->tempMenu .= '<li class="dropdown-submenu">';
-                    $this->tempMenu .= '<a class="test" tabindex="-1" href="#">'.$menu[0].' <span class="caret"></span></a>';
-                }
-                $this->getMenu2($menu['submenu'], true, $submodule);
-            }else{
-                $this->tempMenu .= '<li><a tabindex="-1" href="'.$link.'">'.$menu[0].'</a></li>';
-            }
+    private function setComponent()
+    {
+        $this->component = new Component($this);
 
-            if (isset($menu['submenu']) && $isSub) {
-                $this->tempMenu .= '</li>';
-            }
-
-            if (!$isSub){
-                $this->tempMenu .= '</div>';
-            }
-        }
-
-        if ($isSub) {
-            $this->tempMenu .= '</ul>';
-        }
+        return $this;
     }
 }

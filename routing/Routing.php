@@ -61,7 +61,7 @@ class Routing extends Component
 
     protected function getLanguage()
     {
-        $file = $this->app->config['BaseDir'] . DIRECTORY_SEPARATOR . $this->app->config['LangPath'] . $this->app->config['language'] . ".php";
+        $file = $this->app->BaseDir . DIRECTORY_SEPARATOR . rtrim($this->app->LangPath,'/').'/' . $this->app->language . ".php";
 
         return require_once $file;
     }
@@ -79,7 +79,7 @@ class Routing extends Component
             'method' => $this->method,
             'vars' => $this->vars,
             'data' => $data,
-            'config' => $this->app->config
+            'app' => $this->app
         ];
     }
 
@@ -93,8 +93,8 @@ class Routing extends Component
 
     private function setRoutes()
     {
-        $routePath = $this->app->config['BaseDir'] . DIRECTORY_SEPARATOR .
-            $this->app->config['RoutePath'] . $this->app->config['RouteName'];
+        $routePath = $this->app->BaseDir . DIRECTORY_SEPARATOR .
+            rtrim($this->app->RoutePath, '/'). '/' . $this->app->RouteName;
 
         $this->routes = file_exists($routePath) ? require $routePath : [];
 
@@ -163,7 +163,7 @@ class Routing extends Component
     private function isController($controller)
     {
         $this->controller = $controller ?
-            $this->app->config['ControllerNameSpace']."\\".explode('@', $controller)[0]:
+            $this->app->ControllerNameSpace."\\".explode('@', $controller)[0]:
             \greenweb\addon\controller\Controller::class;
 
         if ($this->methodCalled == 'client' && class_exists($this->controller)) {
@@ -193,9 +193,9 @@ class Routing extends Component
         $arrayAction = explode('/', $action);
         $module = array_shift($arrayAction);
 
-        if ($this->app->config['modules'][$module]) {
+        if (isset($this->app->modules[$module])) {
             $this->vars['subModules'] .= $module . '/';
-            $this->app = new $this->app->config['modules'][$module]();
+            $this->app = new $this->app->modules[$module]();
             $action = implode('/', $arrayAction);
             $this->routes = $this->app->routing->routes;
         }
