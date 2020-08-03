@@ -15,7 +15,7 @@ class permission extends Component
     public function __construct(Addon $app)
     {
         parent::__construct($app);
-        $this->permissions = $this->app->config['permission'];;
+        $this->permissions = $this->app->permissionArray;
     }
 
     public function has($perm, $user_id = null)
