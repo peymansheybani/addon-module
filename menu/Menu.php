@@ -54,7 +54,7 @@ class Menu extends Component
                     $this->app->tempMenu .= '<a class="test" tabindex="-1" href="#">'.$menu[0].' <span class="caret"></span></a>';
                 }
                 $this->getMenu($menu['submenu'], true, $submodule, $vars);
-            }else{
+            }elseif ($parent !== ''){
                 $this->app->tempMenu .= '<li><a tabindex="-1" href="'.$link.'">'.$menu[0].'</a></li>';
             }
 
