@@ -4,7 +4,6 @@
     "type": "library",
     "keywords": ["migration"],
     "require": {
-        "respect/validation" : "^1.0",
         "morilog/jalali": "3.*"
     },
     "license": "MIT",
